@@ -1,0 +1,8 @@
+menu "esp32s3 spiffs conf for storage satellite data"
+    config LED_GPIO
+        int "LED GPIO number"
+        range 0 48
+        default 2
+        help
+        LED GPIO
+endmenu

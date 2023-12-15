@@ -1,0 +1,25 @@
+// Header guard
+#ifndef HEADER_H_MAIN
+#define HEADER_H_MAIN
+//-------------------------------
+#include <stdio.h>
+
+// ESP-IDF headers
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "driver/gpio.h"
+#include "sdkconfig.h"
+#include "esp_spiffs.h"
+#include "esp_err.h"
+#include "esp_log.h"
+#include "string.h"
+#include "esp_netif.h"
+#include "esp_http_client.h"
+#include "esp_tls.h"
+#include <sys/unistd.h> 
+#include <sys/stat.h>
+#include <sys/param.h>
+#include "esp_http_client.h"
+//-------------------------------
+#endif

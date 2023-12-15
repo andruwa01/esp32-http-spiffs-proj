@@ -1,0 +1,39 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.adapterTargetName": "esp32s3",
+    "idf.customExtraPaths": "/home/user/.espressif/tools/xtensa-esp-elf-gdb/12.1_20221002/xtensa-esp-elf-gdb/bin:/home/user/.espressif/tools/riscv32-esp-elf-gdb/12.1_20221002/riscv32-esp-elf-gdb/bin:/home/user/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin:/home/user/.espressif/tools/xtensa-esp32s2-elf/esp-12.2.0_20230208/xtensa-esp32s2-elf/bin:/home/user/.espressif/tools/xtensa-esp32s3-elf/esp-12.2.0_20230208/xtensa-esp32s3-elf/bin:/home/user/.espressif/tools/riscv32-esp-elf/esp-12.2.0_20230208/riscv32-esp-elf/bin:/home/user/.espressif/tools/esp32ulp-elf/2.35_20220830/esp32ulp-elf/bin:/home/user/.espressif/tools/openocd-esp32/v0.12.0-esp32-20230419/openocd-esp32/bin:/home/user/.espressif/tools/esp-rom-elfs/20230320",
+    "idf.customExtraVars": {
+        "OPENOCD_SCRIPTS": "/home/user/.espressif/tools/openocd-esp32/v0.12.0-esp32-20230419/openocd-esp32/share/openocd/scripts",
+        "ESP_ROM_ELF_DIR": "/home/user/.espressif/tools/esp-rom-elfs/20230320/"
+    },
+    "idf.espIdfPath": "/home/user/esp/esp-idf",
+    "idf.openOcdConfigs": [
+        "board/esp32s3-bridge.cfg"
+    ],
+    "idf.port": "/dev/ttyUSB0",
+    "idf.pythonBinPath": "/home/user/.espressif/python_env/idf5.1_py3.10_env/bin/python",
+    "idf.toolsPath": "/home/user/.espressif",
+    "files.associations": {
+        "esp_log.h": "c",
+        "stdio.h": "c",
+        "gpio.h": "c",
+        "freertos.h": "c",
+        "sdkconfig.h": "c",
+        "main.h": "c",
+        "wifi.h": "c",
+        "esp_wifi.h": "c",
+        "queue.h": "c",
+        "nvs.h": "c",
+        "nvs_flash.h": "c",
+        "spiffsstorage.h": "c",
+        "unistd.h": "c",
+        "esp_err.h": "c",
+        "esp_spiffs.h": "c",
+        "md5.h": "c",
+        "esp_http_client.h": "c"
+    },
+    "idf.flashType": "UART",
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_cpp.intelliSenseEngine": "default", 
+    "C_Cpp.default.compilerPath": "/home/user/.espressif/tools/xtensa-esp32s3-elf/esp-12.2.0_20230208/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc"
+}
