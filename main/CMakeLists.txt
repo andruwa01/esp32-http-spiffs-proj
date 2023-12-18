@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "wifi.c" "spiffsStorage.c" "main.c"
+    SRCS "httpClient.c" "wifi.c" "main.c"
     INCLUDE_DIRS "." 
 )
 

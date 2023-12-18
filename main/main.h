@@ -8,6 +8,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/event_groups.h"
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 #include "esp_spiffs.h"
@@ -21,5 +22,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include "esp_http_client.h"
+#include "esp_wifi.h"
+#include "nvs_flash.h"
 //-------------------------------
 #endif

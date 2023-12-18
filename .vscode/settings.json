@@ -30,7 +30,8 @@
         "esp_err.h": "c",
         "esp_spiffs.h": "c",
         "md5.h": "c",
-        "esp_http_client.h": "c"
+        "esp_http_client.h": "c",
+        "httpclient.h": "c"
     },
     "idf.flashType": "UART",
     "C_Cpp.errorSquiggles": "enabled",
