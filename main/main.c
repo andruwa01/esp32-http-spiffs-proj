@@ -5,6 +5,9 @@
 
 static char *TAG = "main";
 
+// extern const uint8_t certificate_pem_start[] asm("_binary_clientCert_pem_start");
+// extern const uint8_t certificate_pem_end[]   asm("_binary_clientCert_pem_end");
+
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     switch (event_id)
@@ -65,9 +68,11 @@ esp_err_t client_event_get_handler(
 
 static void get_rest_function(){
     esp_http_client_config_t config_get = {
-        // .url = "http://worldtimeapi.org/api/timezone/America/Argentina/Salta",
-        .url = "http://httpbin.org/get",
-        // .path = "/get",
+        // use .host + .path or only .url
+        // .url = "http://worldtimeapi.org/api/timezone/America/Argentina/Salta", //work
+        // .url = "http://httpbin.org/get", // work
+        .url = "https://api.n2yo.com/rest/v1/satellite/tle/25544&apiKey=VKC8LB-XBX436-NS9KSA-56EJ",
+        // .cert_pem = (const char*) certificate_pem_start,
         .method = HTTP_METHOD_GET,
         .event_handler = client_event_get_handler
     };
