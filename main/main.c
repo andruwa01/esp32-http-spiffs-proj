@@ -3,10 +3,7 @@
 #include "wifi.h"
 #include "httpClient.h"
 
-static char *TAG = "main";
-
-// extern const uint8_t certificate_pem_start[] asm("_binary_clientCert_pem_start");
-// extern const uint8_t certificate_pem_end[]   asm("_binary_clientCert_pem_end");
+const static char* TAGhttp = "HTTP";
 
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -51,15 +48,41 @@ void wifi_connection(){
 }
 
 // Client
-esp_err_t client_event_get_handler(
-    esp_http_client_event_handle_t evt) {
+esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
     switch (evt->event_id)
     {
     case HTTP_EVENT_ON_DATA:
-        // ESP_LOGI(TAG ,"Client HTTP_EVENT_ON_DATA, data value: %.*s\n", evt->data_len, (char*)evt->data);
-        printf("Client HTTP_EVENT_ON_DATA, data value: %.*s\n", evt->data_len, (char*)evt->data);
-        break;
+        printf("Client HTTP_EVENT_ON_DATA, data value: %.*s\n",evt->data_len, (char*)evt->data);
 
+        ESP_LOGI(TAGhttp, "Parsing data from JSON string . . .");
+
+        int status = 0;
+        const cJSON *info_elements = NULL;
+        const cJSON *info_element = NULL;
+
+        cJSON *json_satellite_data = cJSON_Parse(evt->data);
+
+        if(json_satellite_data == NULL){
+            const char *error_ptr = cJSON_GetErrorPtr();
+            if(error_ptr != NULL){
+                ESP_LOGE(TAGhttp, "Error before %s", error_ptr);
+            }
+            status = 0;
+            goto end;
+        }
+
+        info_elements = cJSON_GetObjectItemCaseSensitive(json_satellite_data, "info");
+        cJSON_ArrayForEach(info_element,info_elements){
+            cJSON *sat_id = cJSON_GetObjectItemCaseSensitive(info_element, "satid");
+            cJSON *sat_name = cJSON_GetObjectItemCaseSensitive(info_element, "satname");
+            cJSON *trans_count = cJSON_GetObjectItemCaseSensitive(info_element, "transactioncount");
+            cJSON *passes_count = cJSON_GetObjectItemCaseSensitive(info_element, "passescount");
+        }
+
+        end:
+            cJSON_Delete(json_satellite_data);
+            ESP_LOGI(TAGhttp, "Status from parsing process: %i", status);
+        break;
     default:
         break;
     }
@@ -69,10 +92,14 @@ esp_err_t client_event_get_handler(
 static void get_rest_function(){
     esp_http_client_config_t config_get = {
         // use .host + .path or only .url
+
         // .url = "http://worldtimeapi.org/api/timezone/America/Argentina/Salta", //work
-        // .url = "http://httpbin.org/get", // work
-        .url = "https://api.n2yo.com/rest/v1/satellite/tle/25544&apiKey=VKC8LB-XBX436-NS9KSA-56EJ",
-        // .cert_pem = (const char*) certificate_pem_start,
+        // .url = "http://httpbin.org/get",                                       //work
+        // .url = "http://api.n2yo.com/rest/v1/satellite/tle/25544&apiKey=VKC8LB-XBX436-NS9KSA-56EJ",
+        .url = "https://api.n2yo.com/rest/v1/satellite/radiopasses/25544/41.702/-76.014/0/2/40/&apiKey=VKC8LB-XBX436-NS9KSA-56EJ",
+        // .cert_pem = (const unsigned char*) certificate_pem_start,
+        // .client_cert_pem = root_ca,
+        // .cert_pem = root_ca_n2yo,
         .method = HTTP_METHOD_GET,
         .event_handler = client_event_get_handler
     };

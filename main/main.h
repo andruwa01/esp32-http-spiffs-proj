@@ -3,6 +3,7 @@
 #define HEADER_H_MAIN
 //-------------------------------
 #include <stdio.h>
+#include <cJSON.h>
 
 // ESP-IDF headers
 #include "freertos/FreeRTOS.h"
