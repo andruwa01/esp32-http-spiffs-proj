@@ -4,6 +4,8 @@
 #include "httpClient.h"
 
 const static char* TAGhttp = "HTTP";
+const static char* TAGmain = "main_app";
+char data_result[];
 
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -54,35 +56,53 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
     case HTTP_EVENT_ON_DATA:
         printf("Client HTTP_EVENT_ON_DATA, data value: %.*s\n",evt->data_len, (char*)evt->data);
 
-        ESP_LOGI(TAGhttp, "Parsing data from JSON string . . .");
+        ESP_LOGI(TAGhttp, "Performing string concatination");
+        strcat(data_result, (char*)evt->data);
+        
+        // ESP_LOGI(TAGhttp, "Parsing data from JSON string . . .");
 
-        int status = 0;
-        const cJSON *info_elements = NULL;
-        const cJSON *info_element = NULL;
+        // int status = 0;
+        // const cJSON *info_elements = NULL;
+        // const cJSON *info_element = NULL;
 
-        cJSON *json_satellite_data = cJSON_Parse(evt->data);
+        // cJSON *json_satellite_data = cJSON_Parse((char*)evt->data);
 
-        if(json_satellite_data == NULL){
-            const char *error_ptr = cJSON_GetErrorPtr();
-            if(error_ptr != NULL){
-                ESP_LOGE(TAGhttp, "Error before %s", error_ptr);
-            }
-            status = 0;
-            goto end;
-        }
+        // if(json_satellite_data == NULL){
+        //     const char *error_ptr = cJSON_GetErrorPtr();
+        //     if(error_ptr != NULL){
+        //         ESP_LOGE(TAGhttp, "Error before %s", error_ptr);
+        //     }
+        //     status = 0;
+        //     goto end;
+        // }
 
-        info_elements = cJSON_GetObjectItemCaseSensitive(json_satellite_data, "info");
-        cJSON_ArrayForEach(info_element,info_elements){
-            cJSON *sat_id = cJSON_GetObjectItemCaseSensitive(info_element, "satid");
-            cJSON *sat_name = cJSON_GetObjectItemCaseSensitive(info_element, "satname");
-            cJSON *trans_count = cJSON_GetObjectItemCaseSensitive(info_element, "transactioncount");
-            cJSON *passes_count = cJSON_GetObjectItemCaseSensitive(info_element, "passescount");
-        }
+        // info_elements = cJSON_GetObjectItemCaseSensitive(json_satellite_data, "info");
+        // cJSON_ArrayForEach(info_element,info_elements){
+        //     cJSON *sat_id = cJSON_GetObjectItemCaseSensitive(info_element, "satid");
+        //     cJSON *sat_name = cJSON_GetObjectItemCaseSensitive(info_element, "satname");
+        //     cJSON *trans_count = cJSON_GetObjectItemCaseSensitive(info_element, "transactioncount");
+        //     cJSON *passes_count = cJSON_GetObjectItemCaseSensitive(info_element, "passescount");
 
-        end:
-            cJSON_Delete(json_satellite_data);
-            ESP_LOGI(TAGhttp, "Status from parsing process: %i", status);
-        break;
+        //     if(
+        //      !cJSON_IsString(sat_id) || 
+        //      !cJSON_IsString(sat_name) || 
+        //      !cJSON_IsString(trans_count) || 
+        //      !cJSON_IsString(passes_count))
+        //     {
+        //         status = 0;
+        //         goto end;
+        //     }
+
+        //     ESP_LOGI(TAGhttp, "satid: %s", sat_id->valuestring);
+        //     ESP_LOGI(TAGhttp, "satname: %s", sat_name->valuestring);
+        //     ESP_LOGI(TAGhttp, "transcount: %s", trans_count->valuestring);
+        //     ESP_LOGI(TAGhttp, "passescount: %s", passes_count->valuestring);
+        // }
+
+        // end:
+        //     cJSON_Delete(json_satellite_data);
+        //     ESP_LOGI(TAGhttp, "Status from parsing process: %i", status);
+        // break;
     default:
         break;
     }
@@ -109,7 +129,6 @@ static void get_rest_function(){
     esp_http_client_cleanup(client);
 }
 
-
 void app_main(void)
 {
     nvs_flash_init();
@@ -121,4 +140,10 @@ void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(2000));
     printf("Starting client . . . \n\n");
     get_rest_function();
+
+    if(strcmp(data_result, "") != 0){
+        ESP_LOGI(TAGmain, "Result json string: %s\n", data_result);
+    } else {
+        ESP_LOGW(TAGmain, "Result json string is empty");
+    }
 }
