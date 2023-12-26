@@ -8,55 +8,43 @@
 
 //===================================
 
-static char* TAG = "spiffs";
+static char* spiffs_tag = "spiffs";
 
-void writeToFile(){
-    ESP_LOGI(TAG, "Writing to file");
-    FILE* fpw = fopen("/spiffs/hello.txt", "w");
+void add_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
+    ESP_LOGI(spiffs_tag, "Writing to file . . .");
+    // FILE* fpw = fopen("/spiffs/hello.txt", "w");
+    FILE *fpw = fopen(path_to_spiffs_file, "a");
     if(fpw == NULL){
-        ESP_LOGE(TAG, "Failed to open file for writing");
+        ESP_LOGE(spiffs_tag, "Failed to open file for writing");
         return;
     } else {
-        fprintf(fpw, "Entered text !\n");
+        fprintf(fpw, "\n%s", text_to_write);
         fclose(fpw);
-        ESP_LOGI(TAG, "File successfully writed");
+
+        ESP_LOGI(spiffs_tag, "Text successfully writed");
     }
 }
 
-void readFile(){
-    ESP_LOGI(TAG, "Reading file (before editing)");
-    FILE* fpr = fopen("/spiffs/hello.txt", "r");
+void read_file_from_spiffs(char *path_to_spiffs_file){
+    ESP_LOGI(spiffs_tag, "Reading file");
+
+    FILE* fpr = fopen(path_to_spiffs_file, "r");
     if(fpr == NULL){
-        ESP_LOGE(TAG, "Failed to open file for reading");
+        ESP_LOGE(spiffs_tag, "Failed to open file for reading");
         return;
     } else {
-        ESP_LOGI(TAG, "File successfully readed");
+        // TODO finish it
+        char buffer[1024];
+        fread(buffer, sizeof(char), 1024, fpr);  
+        ESP_LOGI(spiffs_tag, "File %s successfully readed, contents:\n%s", path_to_spiffs_file, buffer);
     }
-    
-    char buf[64];
-    memset(buf, 0, sizeof(buf));
-    fread(buf, 1, sizeof(buf), fpr);
-    fclose(fpr);
-
-    ESP_LOGI(TAG, "Read from hello.txt: %s", buf);
 }
-void testFileInOut(){
-
-    // Reading file before editing
-    readFile();
-    
-    // Writing new information to file
-    writeToFile();
-
-    // Reading file after editing
-    readFile();
-}  
 
 void spiffsHandler(){
     // Delay, so we can wee info about initialization and partition
     vTaskDelay(pdMS_TO_TICKS(2500));
 
-    ESP_LOGI(TAG, "Initializing spiffs. . .");  
+    ESP_LOGI(spiffs_tag, "Initializing spiffs. . .");  
 
     // Configurate structure for esp_vfs_spiffs_register
     esp_vfs_spiffs_conf_t confStructure = {
@@ -73,26 +61,24 @@ void spiffsHandler(){
     #ifdef CHECK_SPIFFS
     if (spiffsStatus != ESP_OK){
         if (spiffsStatus == ESP_FAIL){
-            ESP_LOGE(TAG, "Failed to mount filesystem");
+            ESP_LOGE(spiffs_tag, "Failed to mount filesystem");
         } else if (spiffsStatus == ESP_ERR_NOT_FOUND){
-            ESP_LOGE(TAG, "Failed to find spiffs partition");
+            ESP_LOGE(spiffs_tag, "Failed to find spiffs partition");
         } else {
-            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(spiffsStatus));
+            ESP_LOGE(spiffs_tag, "Failed to initialize SPIFFS (%s)", esp_err_to_name(spiffsStatus));
         }          
     } 
     #endif
 
     // Checking spiffs connection status (integrity of partition label)
     #ifdef SPIFFS_CHECK_ON_START
-    ESP_LOGI(TAG, "Performing SPIFFS_check(). . .");
+    ESP_LOGI(spiffs_tag, "Performing SPIFFS_check(). . .");
     spiffsStatus = esp_spiffs_check(confStructure.partition_label);
     if (spiffsStatus != ESP_OK) {
-        ESP_LOGE(TAG, "SPIFFS_check() failed (%s)", esp_err_to_name(spiffsStatus));
+        ESP_LOGE(spiffs_tag, "SPIFFS_check() failed (%s)", esp_err_to_name(spiffsStatus));
         return;
     } else {
-        ESP_LOGI(TAG, "SPIFFS_check() successful");
+        ESP_LOGI(spiffs_tag, "SPIFFS_check() successful");
     }
     #endif
-
-    testFileInOut();
 }

@@ -1,0 +1,8 @@
+name=norbi
+norad=46494
+freq=436703000
+bw=250000
+sf=10
+cr=5
+sw=18
+pl=8

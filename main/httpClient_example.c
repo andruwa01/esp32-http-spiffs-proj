@@ -1,4 +1,4 @@
-#include "httpClient.h"
+#include "httpClient_example.h"
 
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048

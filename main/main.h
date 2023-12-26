@@ -25,5 +25,8 @@
 #include "esp_http_client.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
+
+#include "time.h"
+#include "stdlib.h"
 //-------------------------------
 #endif
