@@ -37,7 +37,7 @@ void get_rest_function(){
         // .url = "http://httpbin.org/get",                                       //work
 
         // WARNING: disabled security options in menuconfig to work with this url 
-        .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/46494/51.671667/39.210556/99/10/40/&apiKey=VKC8LB-XBX436-NS9KSA-56EJ",
+        .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/46494/51.671667/39.210556/99/10/40/*",
         // .cert_pem = (const unsigned char*) certificate_pem_start,
         // .client_cert_pem = root_ca,
         // .cert_pem = root_ca_n2yo,
