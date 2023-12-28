@@ -4,7 +4,6 @@
 
 const static char* TAGhttp = "HTTP";
 
-
 int event_counter = 0;
 
 // Client
@@ -15,9 +14,13 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
         event_counter++;
         // event_counter == 1 missed because we don't need this information
         if(event_counter > 1){
-            printf("Client HTTP_EVENT_ON_DATA, data value: %.*s\n",evt->data_len, (char*)evt->data);
+            printf("Current data_len of data: %i\n", (int)evt->data_len);
+            printf("Client HTTP_EVENT_ON_DATA, data value:\n%.*s\n",evt->data_len, (char*)evt->data);
             printf("\n");
-            json_parser((char*)evt->data);
+
+            #ifdef PARSE_DATA
+                json_parser((char*)evt->data);
+            #endif
         }
         break;
     default:
@@ -34,7 +37,7 @@ void get_rest_function(){
         // .url = "http://httpbin.org/get",                                       //work
 
         // WARNING: disabled security options in menuconfig to work with this url 
-        .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/46494/51.671667/39.210556/99/10/40/*",
+        .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/46494/51.671667/39.210556/99/10/40/&apiKey=VKC8LB-XBX436-NS9KSA-56EJ",
         // .cert_pem = (const unsigned char*) certificate_pem_start,
         // .client_cert_pem = root_ca,
         // .cert_pem = root_ca_n2yo,
@@ -44,6 +47,7 @@ void get_rest_function(){
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&config_get);
+
     esp_http_client_perform(client);
     esp_http_client_cleanup(client);
 }

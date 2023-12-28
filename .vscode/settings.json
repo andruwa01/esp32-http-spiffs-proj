@@ -36,7 +36,8 @@
         "http_client.h": "c",
         "time.h": "c",
         "time_converter.h": "c",
-        "satellite_data_parser.h": "c"
+        "satellite_data_parser.h": "c",
+        "options.h": "c"
     },
     "idf.flashType": "UART",
     "C_Cpp.errorSquiggles": "enabled",

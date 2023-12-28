@@ -2,6 +2,8 @@
 #ifndef HEADER_H_MAIN
 #define HEADER_H_MAIN
 //-------------------------------
+#include "options.h"
+
 #include <stdio.h>
 #include <cJSON.h>
 

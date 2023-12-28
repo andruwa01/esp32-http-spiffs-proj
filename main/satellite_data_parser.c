@@ -2,8 +2,6 @@
 #include "satellite_data_parser.h"
 #include "spiffsStorage.h"
 
-// #define PRINT_PACKAGE
-
 const static char *time_converter_tag = "time_converter";
 static char time_format[] = "%d.%m.%Y %H:%M";
 
@@ -85,7 +83,12 @@ void json_parser(char* string_to_parse){
 
 		sprintf(formatted_string, "#%i start %s end %s", index++, utc_converted_start, utc_converted_end);
 
-		add_to_spiffs("/spiffs/data.txt", formatted_string);
+		#ifdef USE_SPIFFS
+			add_to_spiffs("/spiffs/norbi.txt", formatted_string);
+		#else
+			ESP_LOGW(time_converter_tag, "You don't use spiffs!");
+		#endif
+
 	}
 
 	cJSON_Delete(json_object);

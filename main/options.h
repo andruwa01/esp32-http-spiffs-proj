@@ -1,0 +1,4 @@
+#define USE_SPIFFS
+// #define PRINT_PACKAGE
+#define VORONEZH_UTC_CORRECTION
+#define PARSE_DATA

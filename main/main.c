@@ -7,7 +7,9 @@ const static char* TAGmain = "main_app";
 
 void app_main(void)
 {
-	spiffsHandler();
+    #ifdef USE_SPIFFS
+	    spiffs_handler();
+    #endif
 
     esp_err_t ret = nvs_flash_init();
     if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND){
@@ -25,5 +27,9 @@ void app_main(void)
 
     get_rest_function();
 
-    read_file_from_spiffs("/spiffs/data.txt");
+    #ifdef USE_SPIFFS
+        read_file_from_spiffs("/spiffs/norbi.txt");
+    #else
+        ESP_LOGW(TAGmain, "You don't use spiffs!");
+    #endif
 }

@@ -1,7 +1,7 @@
 #include "main.h"
 
 // Initializing spiffs with corresponding logs
-void spiffsHandler();
+void spiffs_handler();
 
 // Add file to spiffs filesystem
 void add_to_spiffs(char *path_to_spiffs_file, char *text_to_write);

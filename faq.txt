@@ -1,0 +1,124 @@
+av/ Important details
+
+! mbedTLS -> Certificate Bundle → Enable trusted root certificate bundle 
+  на сайте https://kotyara12.ru/iot/espidf_config/ указано, что включенная опция есть много памяти, и у меня эта штука ВКЛЮЧЕНА  
+[x] Почитать про ошибку с watchdog timer в моём случае при добавлении #define SPIFFS_CHECK_ON_START
+    ! При добавлении SPIFFS_CHECK_ON_START флага в main.h срабатывает watchdog timer
+    https://github.com/espressif/esp-idf/issues/1646
+    https://github.com/espressif/arduino-esp32/issues/3871
+[x] Ошибка, когда intelliSense не видит заголовочных файлов, но при этом build проекта осуществляется успешно
+    Решение:
+    https://github.com/espressif/vscode-esp-idf-extension/blob/master/docs/C_CPP_CONFIGURATION.md [x] Проблема: вылезает ошибка , но макет с sx1278 прошивается (). Ошибка, срабатывает таймер watchdog.
+    Проблема возникает из-за того, что при выборе target esp32s3 в menuconfig перезаписываются значения пинов и потом их Нужно
+    записывать заново
+    Решение:
+    Правильно настроить порты в menuconfig (или sdkconfig). При этом можно автоматически выставить 
+#
+# Example Configuration
+#
+CONFIG_LED_GPIO=2
+CONFIG_PIN_NUM_MOSI=11
+CONFIG_PIN_NUM_MISO=13
+CONFIG_PIN_NUM_CLK=12
+CONFIG_PIN_NUM_SX1278_CS=4
+CONFIG_PIN_NUM_SX1278_NRESET=6
+CONFIG_PIN_NUM_SX1278_DIO1=5
+CONFIG_SPI_CLOCK_SPEED=10000000
+
+[x] Проблема: в vscode переменные становятся белыми
+    Решение: поменять режим C_Cpp.intelliSenseMode в .vscode/settings.json
+
+
+[x] Важная особенность организации фацловой системы spiffs
+!!!
+    // The file alice.txt lives under a subdirectory, though SPIFFS itself is flat
+    FILE* f = fopen("/spiffs/sub/alice.txt", "r");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open alice.txt");
+        return;
+    }
+!!!
+
+// TODO 
+
+[] Ещё раз посмотреть всё переменные где используется память, возможно оптимизировать их как-то
+[x] Добавить проверку на то, сколько памяти спользуется в spiffs.
+[] Сделать возможность вбивать параметры, по которым будет формироваться запрос на сервер
+[] Реализовать wifi , как в примерах с официального репозитория, т.е. чтобы при потере соединения устройство
+   автоматически (или нет) пыталось подключить к сети.
+[] Сделать получение вообще всех данных и запись их в spiffs
+[] Сделать возможность обновления данных , при наличии доступа к сети
+[] Сделать так, чтобы для каждого спутника создавался свой файл
+[] реализовать функционал "запрос-ответ" при взаимодействии с пользователем приложения
+[] Получить все данные со всех спутников tinygs
+[] Реализовать планировщик, чтобы по времени доставалось нужное расписание + отдавался приоритет спутнику с большей высотой
+
+[] Сделать так, чтобы (по запросу) файл можно было открыть и прочитать что там (его содержимое).
+[] Сделать, чтобы при работающем wifi и наличии подключения горела лампоча
+
+[] Настроить возможность подключатьс япо https сертификат
+       https://youtu.be/Dv0APuuHFh8?si=6U2MrLzdfnrta-xL - тут показаны get запросы и как реализуется сертификат
+[] попробовать с сертификатом - можно настроить сертификат, но можно сделать это потом
+[] Настроить всё с помощью esp tls
+
+// OPTIONAL TODO
+[] Что такое прерывания и как они реализованы ? ISR etc
+[] Прочитать про backtrace в контексте прерываний
+[] Прочитать про build систему espressif и какие там настройки есть (это нужно чтобы правильно скомпилировать
+    имеющейся код, только на в eclipse а в vscode). К тому же поможет разобраться в cmake.
+        [] файл c_cpp_properties.json и зачем он нужен
+        [] файл compile_commands.json и зачем он нужен
+[] (тут тоже есть про память) изучить таймеры в esp32 https://kotyara12.ru/iot/esp32_timers/   
+[] почитать дополнительно про main task stack size
+[] почитать дополнительно про event loop task stack size
+[]  High-resolution timer task stack size что это ?
+[]  Hardware timer to use for esp_timer что это ?
+[x] повторить взаимодействие файлов через fopen , frpintf etc
+[] Можно почитать про то, как грамотно использовать stack и проверять его на переполнение
+    [] http://microsin.net/programming/arm-troubleshooting-faq/freertos-stack-usage-and-stack-overflow-checking.html
+    [] https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/mem_alloc.html
+    [] https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/freertos.html?highlight=uxtaskgetsystemstate#_CPPv420uxTaskGetSystemStatePC12TaskStatus_tK11UBaseType_tPC8uint32_t
+    [] https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/performance/ram-usage.html
+
+[] Изучить новую плату (в скачанных файлах есть даташиты и тд)
+[] Посмотреть исходные коды tiny GS и посмотреть с какими библиотеками они там работают.
+[] Прочитать про cmake https://habr.com/ru/articles/155467/
+[] JTAG что это и как с этим работать? в stm32 было чтото похожее
+    [] https://www.youtube.com/watch?v=uq93H7T7cOQ
+
+// DONE (last done on the top)
+[x] Ознакомиться с имеющимися кодами, понять зачем они и перенести их в platformio    
+    [x] Попробовать починить любой другой пример => 
+    [x] Попробовать починить код, который sx
+    [x] Запустить пример espidf
+    [x] Воспользоваться не кнопкой build которая cmake , а кнопкой build от самой esp-idf
+
+[x] spiffs под esp idf , файл небольшой 1кб нужно будет создать
+    [x] Тут есть про API которое можно вызывать в platformio https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/spiffs.html
+    [x] Создать .csv файл с разметкой места во flash памяти  
+    [x] Прошить плату с использованием spiffs
+    [x] Разобраться с примером, попробовать записать текст в файл и получить его оттуда
+[x] Тут в целом про flash память esp32 и о spiffs есть немного там (найти через ctrl + f)  https://kotyara12.ru/iot/esp32_flash/
+
+[x] Почитать в целом про память esp32 https://kotyara12.ru/iot/esp32_memory/ 
+
+[x] разобраться с системой логов esp32 
+    [x] В контексте platformio (у неё есть свои настройки monitor_filters в platformio.ini)
+        [x] прочитать статью про platformio https://kotyara12.ru/iot/pio_first_project/
+        [x] про конфигурацию esp idf https://kotyara12.ru/iot/espidf_config/ 
+        [x] esp_log на сайте esp_idf прочитать
+
+[x] Понять, почему логи в Serial выводятся с какими-то странными символами: возможно дело в monitor_filters в platformio.ini
+        Нужно в monitor_filter присвоить значение direct. В этом случае выводятся логи без дополнительных символов. 
+        Тут можно почитать подробнее:
+        https://docs.platformio.org/en/latest/core/userguide/device/cmd_monitor.html#cmd-device-monitor-filters
+
+[x] Найти библиотеку для sx1280(1278) для работы в esp idf
+    Библиотеки есть также в скачанном архиве для новой платы, которую принесли
+    https://github.com/Inteform/esp32-lora-library
+    https://github.com/dernasherbrezon/sx127x - показалась мне наиболее хорошей
+
+[x] Найти библиотеку для работы с LED дисплеем (или можно как-то использовать ардуино?)
+    https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-reference/peripherals/lcd.html# - в официальной документации есть информация для работы с этим 
+    
+[x] Создать Git репозиторий для проекта 
