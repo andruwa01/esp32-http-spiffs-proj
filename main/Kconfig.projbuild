@@ -8,13 +8,13 @@ menu "esp32s3 spiffs conf for storage satellite data"
 
     config ESP_WIFI_SSID
         string "WiFi SSID"
-        default "myssid"
+        default "dron_ap"
         help
             SSID (network name) for the example to connect to.
 
     config ESP_WIFI_PASSWORD
         string "WiFi Password"
-        default "mypassword"
+        default "dron1542"
         help
             WiFi password (WPA or WPA2) for the example to use.
             

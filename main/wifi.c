@@ -1,7 +1,34 @@
 #include "wifi.h"
 
+#define WIFI_CONNECTED_BIT BIT0
+#define WIFI_FAIL_BIT      BIT1
+
+// static const char *TAG = "wifi station";
+
+// static EventGroupHandle_t s_wifi_event_group;
+// static int wifi_retry_num = 0;
+
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
+    // if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START){
+    //     esp_wifi_connect();
+    // } else if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED){
+    //     if(wifi_retry_num < CONFIG_ESP_MAXIMUM_RETRY){
+    //         esp_wifi_connect();
+    //         wifi_retry_num++;
+    //         ESP_LOGI(TAG, "retry connecting to the AP");
+    //     } else {
+    //         //TODO: read about this function in FreeRTOS 
+    //         xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+    //     }
+    //     ESP_LOGI(TAG, "connect to the AP failed");
+    // } else if(event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP){
+    //     ip_event_got_ip_t *event = (ip_event_got_ip_t*)event_data;
+    //     ESP_LOGI(TAG, "Got ip: " IPSTR, IP2STR(&event->ip_info.ip));
+    //     wifi_retry_num = 0;
+    //     xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+    // }
+
     switch (event_id)
     {
     case WIFI_EVENT_STA_START:
@@ -33,8 +60,9 @@ void wifi_connection(){
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL));
     wifi_config_t wifi_configuration = {
         .sta = {
-            .ssid = CONFIG_ESP_WIFI_SSID,
-            .password = CONFIG_ESP_WIFI_PASSWORD}};
+            .ssid = "dron_ap",
+            .password = "dron1542"}
+        };
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_configuration));
     // 3 - Wi-Fi Start Phase
