@@ -1,4 +1,7 @@
-av/ Important details
+Important details
+
+[x] Чтобы не было проблемы с https (и http) можно осуществить отключение валидации сервера 
+    https://esp32.com/viewtopic.php?t=19200
 
 ! mbedTLS -> Certificate Bundle → Enable trusted root certificate bundle 
   на сайте https://kotyara12.ru/iot/espidf_config/ указано, что включенная опция есть много памяти, и у меня эта штука ВКЛЮЧЕНА  
@@ -39,6 +42,10 @@ CONFIG_SPI_CLOCK_SPEED=10000000
 !!!
 
 // TODO 
+[] По нажатию кнопки:
+    [] Получение данных по API 
+    [] Загрузка этих данных в spiffs
+    [] Выгрузка данных на компьютер, для каждого спутника свой файл
 
 [] Что за dialout пользователь и зачем порт было добавлять а разрешения?
 [] Разобраться с xEventGroupSetBits

@@ -77,14 +77,14 @@ void spiffs_handler(){
 
     // Checking spiffs connection status (integrity of partition label)
     #ifdef SPIFFS_CHECK_ON_START
-    ESP_LOGI(spiffs_tag, "Performing SPIFFS_check(). . .");
-    spiffs_status = esp_spiffs_check(conf_spiffs.partition_label);
-    if (spiffs_status != ESP_OK) {
-        ESP_LOGE(spiffs_tag, "SPIFFS_check() failed (%s)", esp_err_to_name(spiffs_status));
-        return;
-    } else {
-        ESP_LOGI(spiffs_tag, "SPIFFS_check() successful");
-    }
+        ESP_LOGI(spiffs_tag, "Performing SPIFFS_check(). . .");
+        spiffs_status = esp_spiffs_check(conf_spiffs.partition_label);
+        if (spiffs_status != ESP_OK) {
+            ESP_LOGE(spiffs_tag, "SPIFFS_check() failed (%s)", esp_err_to_name(spiffs_status));
+            return;
+        } else {
+            ESP_LOGI(spiffs_tag, "SPIFFS_check() successful");
+        }
     #endif
 
     size_t total = 0, used = 0;

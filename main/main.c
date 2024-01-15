@@ -7,6 +7,7 @@ const static char* TAGmain = "main_app";
 
 void app_main(void)
 {
+
     #ifdef USE_SPIFFS
 	    spiffs_handler();
     #endif

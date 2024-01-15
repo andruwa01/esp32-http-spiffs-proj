@@ -4,7 +4,17 @@
 
 const static char* TAGhttp = "HTTP";
 
-int event_counter = 0;
+// GET request data NORBI
+static int id = 46494;
+static float observer_lat = 51.671667;
+static float observer_lng = 39.210556;
+static float observer_alt = 99;
+static int days = 10;
+static int min_elevation = 40;
+static char *api_key = "VKC8LB-XBX436-NS9KSA-56EJ";
+//===============================================//
+
+static int event_counter = 0;
 
 // Client
 esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
@@ -30,6 +40,18 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
 }
 
 void get_rest_function(){
+    char url_buffer[256];
+
+    sprintf(url_buffer, "http://api.n2yo.com/rest/v1/satellite/radiopasses/%i/%f/%f/%f/%i/%i/&apiKey=%s", 
+        id,
+        observer_lat,
+        observer_lng,
+        observer_alt, 
+        days,
+        min_elevation,
+        api_key
+    );
+
     esp_http_client_config_t config_get = {
         // use .host + .path or only .url
 
@@ -38,7 +60,7 @@ void get_rest_function(){
 
         // WARNING: disabled security options in menuconfig to work with this url 
         // .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/25544/41.702/-76.014/0/10/40/&apiKey=VKC8LB-XBX436-NS9KSA-56EJ", // old data from api
-        .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/46494/51.671667/39.210556/99/10/40/&apiKey=VKC8LB-XBX436-NS9KSA-56EJ",
+        .url = url_buffer,
         // .cert_pem = (const unsigned char*) certificate_pem_start,
         // .client_cert_pem = root_ca,
         // .cert_pem = root_ca_n2yo,
