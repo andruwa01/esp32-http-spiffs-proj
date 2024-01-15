@@ -1,10 +1,69 @@
 #include "time_converter.h"
 #include "satellite_data_parser.h"
-#include "spiffsStorage.h"
+#include "spiffs_storage.h"
 
 const static char *time_converter_tag = "time_converter";
 static char time_format[] = "%d.%m.%Y %H:%M";
 
+static int pass_number = 1;
+
+void get_max_values_write_to_spiffs(double max_az_value, char *max_az_compass_value, double max_el_value, int max_utc){
+	char max_values[128];
+	char max_utc_converted[32];
+
+	time_t time_to_convert = (int)max_utc;
+	time_converter(&time_to_convert, time_format, max_utc_converted, sizeof(max_utc_converted));
+
+	sprintf(max_values, "maxAz: %lf\nmaxAzCompass: %s\nmaxEl: %lf\nmaxUTC: %s", max_az_value, max_az_compass_value, max_el_value, max_utc_converted);
+
+	#ifdef USE_SPIFFS
+		add_to_spiffs("/spiffs/norbi.txt", max_values);
+	#else	
+		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
+	#endif
+}
+
+void get_az_compass_values_write_to_spiffs(char *start_az_compass_value, char *end_az_compass_value){
+	char az_compass_values[128];
+	sprintf(az_compass_values, "startAzCompass: %s\nendAzCompass: %s", start_az_compass_value, end_az_compass_value);
+
+	#ifdef USE_SPIFFS
+		add_to_spiffs("/spiffs/norbi.txt", az_compass_values);
+	#else
+		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
+	#endif
+}
+
+void get_az_values_write_to_spiffs(double start_az_value, double end_az_value){
+	char az_values[128];
+	sprintf(az_values, "startAz: %lf\nendAz: %lf", start_az_value, end_az_value);
+
+	#ifdef USE_SPIFFS
+		add_to_spiffs("/spiffs/norbi.txt", az_values);
+	#else
+		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
+	#endif
+}
+
+void calculate_time_write_to_spiffs(int start_utc, int end_utc){
+	char utc_converted_start[32];
+	char time_human_readable[128];
+	char utc_converted_end[32];
+
+	time_t time_to_convert_start = (int)start_utc;
+	time_t time_to_convert_end = (int)end_utc;
+
+	time_converter(&time_to_convert_start, time_format, utc_converted_start, sizeof(utc_converted_start));
+	time_converter(&time_to_convert_end, time_format, utc_converted_end, sizeof(utc_converted_end));
+
+	sprintf(time_human_readable, "#%i start %s end %s", pass_number++, utc_converted_start, utc_converted_end);
+
+	#ifdef USE_SPIFFS
+		add_to_spiffs("/spiffs/norbi.txt", time_human_readable);
+	#else
+		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
+	#endif
+}
 
 void json_parser(char* string_to_parse){
 	ESP_LOGI(time_converter_tag, "Start parsing data . . .");
@@ -37,18 +96,8 @@ void json_parser(char* string_to_parse){
 	}
 	#endif
 
-	// TODO need to write something or in a file from first part of package or not ?
-	
-	time_t time_to_convert_start; 
-	time_t time_to_convert_end;
-
-	char utc_converted_start[32];
-	char utc_converted_end[32];
-	char formatted_string[128];
-
 	cJSON *pass = NULL;
 	cJSON *passes = cJSON_GetObjectItemCaseSensitive(json_object, "passes");
-	int index = 1;
 	cJSON_ArrayForEach(pass, passes){
 		cJSON *start_az = cJSON_GetObjectItemCaseSensitive(pass, "startAz"); 
 		cJSON *start_az_compass = cJSON_GetObjectItemCaseSensitive(pass, "startAzCompass");
@@ -75,20 +124,27 @@ void json_parser(char* string_to_parse){
 		printf("endUTC: %i\n", (int)cJSON_GetNumberValue(end_utc));
 		#endif
 
-		time_to_convert_start = (int)cJSON_GetNumberValue(start_utc); 
-		time_to_convert_end = (int)cJSON_GetNumberValue(end_utc);
+		calculate_time_write_to_spiffs(
+			(int)cJSON_GetNumberValue(start_utc), 
+			(int)cJSON_GetNumberValue(end_utc)
+		);
 
-		time_converter(&time_to_convert_start, time_format, utc_converted_start, sizeof(utc_converted_start));
-		time_converter(&time_to_convert_end, time_format, utc_converted_end, sizeof(utc_converted_end));
+		get_az_values_write_to_spiffs(
+			cJSON_GetNumberValue(start_az), 
+			cJSON_GetNumberValue(end_az)
+		);
 
-		sprintf(formatted_string, "#%i start %s end %s", index++, utc_converted_start, utc_converted_end);
+		get_az_compass_values_write_to_spiffs(
+			cJSON_GetStringValue(start_az_compass), 
+			cJSON_GetStringValue(end_az_compass)
+		);
 
-		#ifdef USE_SPIFFS
-			add_to_spiffs("/spiffs/norbi.txt", formatted_string);
-		#else
-			ESP_LOGW(time_converter_tag, "You don't use spiffs!");
-		#endif
-
+		get_max_values_write_to_spiffs(
+			cJSON_GetNumberValue(max_az),
+			cJSON_GetStringValue(max_az_compass), 
+			cJSON_GetNumberValue(max_el), 
+			(int)cJSON_GetNumberValue(max_utc)
+		);
 	}
 
 	cJSON_Delete(json_object);

@@ -8,7 +8,9 @@ static const char* converter_tag = "time_converter";
 
 void time_converter(time_t *time_to_convert, char *format_to_convert, char *buffer_for_converted_string, int size_of_buffer){
 
-        ESP_LOGI(converter_tag, "Start to convert time with format: %s", format_to_convert);
+        #ifdef ENABLE_TIME_CONVERTER_LOGS      
+                ESP_LOGI(converter_tag, "Start to convert time with format: %s", format_to_convert);
+        #endif
 
         struct tm time_buffer;
         localtime_r(time_to_convert, &time_buffer);
@@ -20,5 +22,7 @@ void time_converter(time_t *time_to_convert, char *format_to_convert, char *buff
         //TODO write if for it and ESP_LOGE if something bad
         strftime(buffer_for_converted_string, size_of_buffer, format_to_convert, &time_buffer);
 
-        ESP_LOGI(converter_tag, "Finish converting process");
+        #ifdef ENABLE_TIME_CONVERTER_LOGS
+                ESP_LOGI(converter_tag, "Finish converting process");
+        #endif
 }

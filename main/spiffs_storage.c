@@ -1,4 +1,4 @@
-#include "spiffsStorage.h"
+#include "spiffs_storage.h"
 
 //===================================
 // Options for #ifdef...#endif 
@@ -8,10 +8,15 @@
 
 //===================================
 
+#define NUMBER_OF_SYMBOLS_IN_SPIFFS_FILE 3584 
+
 static char* spiffs_tag = "spiffs";
 
 void add_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
-    ESP_LOGI(spiffs_tag, "Writing to file . . .");
+    #ifdef ENABLE_SPIFFS_LOGS
+        ESP_LOGI(spiffs_tag, "Writing to file . . .");
+    #endif
+
     FILE *fpw = fopen(path_to_spiffs_file, "a");
     if(fpw == NULL){
         ESP_LOGE(spiffs_tag, "Failed to open file for writing");
@@ -20,7 +25,9 @@ void add_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
         fprintf(fpw, "\n%s", text_to_write);
         fclose(fpw);
 
-        ESP_LOGI(spiffs_tag, "Text successfully writed");
+        #ifdef ENABLE_SPIFFS_LOGS
+            ESP_LOGI(spiffs_tag, "Text successfully writed");
+        #endif
     }
 }
 
@@ -33,8 +40,8 @@ void read_file_from_spiffs(char *path_to_spiffs_file){
         return;
     } else {
         // TODO finish it
-        char buffer[1024];
-        fread(buffer, sizeof(char), 1024, fpr);  
+        char buffer[NUMBER_OF_SYMBOLS_IN_SPIFFS_FILE];
+        fread(buffer, sizeof(char), NUMBER_OF_SYMBOLS_IN_SPIFFS_FILE, fpr);  
         ESP_LOGI(spiffs_tag, "File %s successfully readed, contents:\n%s", path_to_spiffs_file, buffer);
     }
 }

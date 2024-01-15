@@ -60,8 +60,8 @@ void wifi_connection(){
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL));
     wifi_config_t wifi_configuration = {
         .sta = {
-            .ssid = "dron_ap",
-            .password = "dron1542"}
+            .ssid = CONFIG_ESP_WIFI_SSID,
+            .password = CONFIG_ESP_WIFI_PASSWORD}
         };
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_configuration));
