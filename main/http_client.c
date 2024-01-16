@@ -4,7 +4,7 @@
 
 const static char* TAGhttp = "HTTP";
 
-// GET request data NORBI
+//==========GET request data NORBI===============//
 static int id = 46494;
 static float observer_lat = 51.671667;
 static float observer_lng = 39.210556;
