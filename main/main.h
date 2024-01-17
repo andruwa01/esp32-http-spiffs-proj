@@ -27,6 +27,8 @@
 #include "esp_http_client.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
+#include "driver/uart.h"
+#include "esp_console.h"
 
 #include "time.h"
 #include "stdlib.h"

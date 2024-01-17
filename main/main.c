@@ -2,11 +2,13 @@
 #include "spiffs_storage.h"
 #include "wifi.h"
 #include "http_client.h"
+#include "uart.h"
 
 const static char* TAGmain = "main_app";
 
 void app_main(void)
 {
+    // uart_test();
 
     #ifdef USE_SPIFFS
 	    spiffs_handler();
