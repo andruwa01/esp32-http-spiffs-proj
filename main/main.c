@@ -3,11 +3,13 @@
 #include "wifi.h"
 #include "http_client.h"
 #include "uart.h"
+#include "button.h"
 
 const static char* TAGmain = "main_app";
 
 void app_main(void)
 {
+    button_handler();
     uart_test();
 
     #ifdef USE_SPIFFS
