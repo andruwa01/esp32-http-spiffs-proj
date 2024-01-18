@@ -8,7 +8,7 @@ const static char* TAGmain = "main_app";
 
 void app_main(void)
 {
-    // uart_test();
+    uart_test();
 
     #ifdef USE_SPIFFS
 	    spiffs_handler();

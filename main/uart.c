@@ -2,6 +2,7 @@
 
 #define UART_BUFFER_SIZE 256
 #define UART_BAUD_RATE 115200
+
 #define UART0_TX_PIN 43
 #define UART0_RX_PIN 44
 #define UART0_RTS_PIN 15
@@ -23,9 +24,13 @@ void uart_test(){
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_0, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, UART0_TX_PIN, UART0_RX_PIN, UART0_RTS_PIN, UART0_CTS_PIN));
 
-    char data_to_transmit[] = "Hello from second uart"; 
+    char data_to_transmit[] = "message from UART0\n"; 
+
+    ESP_LOGI(uart_tag, "start transmitting . . .");
+    vTaskDelay(pdMS_TO_TICKS(5000));
 
     int sended_bytes = uart_write_bytes(UART_NUM_0, (char*)data_to_transmit, sizeof(data_to_transmit));
     ESP_LOGI(uart_tag, "%i bytes was sended", sended_bytes);
-    vTaskDelay(pdMS_TO_TICKS(5000));   
+
+    vTaskDelay(pdMS_TO_TICKS(10000));   
 }
