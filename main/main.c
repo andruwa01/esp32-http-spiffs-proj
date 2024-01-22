@@ -7,34 +7,48 @@
 
 const static char* TAGmain = "main_app";
 
+void xTaskButton(){
+    for(;;){
+        ESP_LOGI(TAGmain, "xTaskButton called");
+        button_handler();
+        vTaskDelay(pdMS_TO_TICKS(10000));
+    }
+    vTaskDelete(NULL);
+}
+
 void app_main(void)
 {
-    button_handler();
-    uart_test();
+    uart_configure();
+    uart_write_bytes(UART_NUM_0, "\n\r", sizeof("\n\r"));
 
-    #ifdef USE_SPIFFS
-	    spiffs_handler();
-    #endif
-
-    esp_err_t ret = nvs_flash_init();
-    if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND){
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
+    TaskHandle_t TaskButtonHandle;
+    if (xTaskCreate(xTaskButton, "button", 3000, NULL, 2, &TaskButtonHandle) != pdPASS){
+        ESP_LOGE(TAGmain, "failed to create task");
     }
 
-    wifi_connection();
+    vTaskDelay(pdMS_TO_TICKS(10000));
 
-    vTaskDelay(pdMS_TO_TICKS(2000));
-    ESP_LOGI(TAGmain, "wifi was initiated");
+    ESP_LOGW(TAGmain, "Program finished");
+    vTaskDelete(TaskButtonHandle);
 
-    vTaskDelay(pdMS_TO_TICKS(2000));
-    ESP_LOGI(TAGmain, "starting client . . .");
+    // button_handler();
 
-    get_rest_function();
+    // uart_configure();
 
-    #ifdef USE_SPIFFS
-        read_file_from_spiffs("/spiffs/norbi.txt");
-    #else
-        ESP_LOGW(TAGmain, "You don't use spiffs!");
-    #endif
+    // #ifdef USE_SPIFFS
+	//     spiffs_handler();
+    // #endif
+
+    // esp_err_t ret = nvs_flash_init();
+    // if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND){
+    //     ESP_ERROR_CHECK(nvs_flash_erase());
+    //     ret = nvs_flash_init();
+    // }>
+
+    // get_rest_function();
+    // #ifdef USE_SPIFFS
+    //     read_file_from_spiffs("/spiffs/norbi.txt");
+    // #else
+    //     ESP_LOGW(TAGmain, "You don't use spiffs!");
+    // #endif
 }

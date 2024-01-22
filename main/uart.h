@@ -1,3 +1,4 @@
 #include "main.h"
 
-void uart_test();
+void uart_configure();
+void uart_send_message();

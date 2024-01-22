@@ -10,7 +10,15 @@
 
 const static char *uart_tag = "uart"; 
 
-void uart_test(){
+void uart_send_message(){
+    char data_to_transmit[] = "message from UART0\n"; 
+
+    ESP_LOGW(uart_tag, "start transmitting . . .");
+    int sended_bytes = uart_write_bytes(UART_NUM_0, (char*)data_to_transmit, sizeof(data_to_transmit));
+    ESP_LOGW(uart_tag, "%i bytes was sended", sended_bytes);
+}
+
+void uart_configure(){
     uart_config_t uart_config = {
         .baud_rate = UART_BAUD_RATE,
         .data_bits = UART_DATA_8_BITS,
@@ -24,13 +32,5 @@ void uart_test(){
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_0, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, UART0_TX_PIN, UART0_RX_PIN, UART0_RTS_PIN, UART0_CTS_PIN));
 
-    char data_to_transmit[] = "message from UART0\n"; 
-
-    ESP_LOGI(uart_tag, "start transmitting . . .");
-    vTaskDelay(pdMS_TO_TICKS(5000));
-
-    int sended_bytes = uart_write_bytes(UART_NUM_0, (char*)data_to_transmit, sizeof(data_to_transmit));
-    ESP_LOGI(uart_tag, "%i bytes was sended", sended_bytes);
-
-    vTaskDelay(pdMS_TO_TICKS(10000));   
+    
 }
