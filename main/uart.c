@@ -11,7 +11,7 @@
 const static char *uart_tag = "uart"; 
 
 void uart_send_message(){
-    char data_to_transmit[] = "message from UART0\n"; 
+    char data_to_transmit[] = "message from the board over UART0\n"; 
 
     ESP_LOGW(uart_tag, "start transmitting . . .");
     int sended_bytes = uart_write_bytes(UART_NUM_0, (char*)data_to_transmit, sizeof(data_to_transmit));
@@ -31,6 +31,4 @@ void uart_configure(){
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_0, UART_BUFFER_SIZE, UART_BUFFER_SIZE, 0, NULL, 0));
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_0, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, UART0_TX_PIN, UART0_RX_PIN, UART0_RTS_PIN, UART0_CTS_PIN));
-
-    
 }

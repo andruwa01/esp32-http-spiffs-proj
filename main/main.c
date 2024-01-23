@@ -8,10 +8,10 @@
 const static char* TAGmain = "main_app";
 
 void xTaskButton(){
+    ESP_LOGI(TAGmain, "xTaskButton called");
+    button_handler();
     for(;;){
-        ESP_LOGI(TAGmain, "xTaskButton called");
-        button_handler();
-        vTaskDelay(pdMS_TO_TICKS(10000));
+        vTaskSuspend(NULL);
     }
     vTaskDelete(NULL);
 }
@@ -19,16 +19,15 @@ void xTaskButton(){
 void app_main(void)
 {
     uart_configure();
-    uart_write_bytes(UART_NUM_0, "\n\r", sizeof("\n\r"));
-
-    TaskHandle_t TaskButtonHandle;
+    
+    TaskHandle_t TaskButtonHandle = NULL;
     if (xTaskCreate(xTaskButton, "button", 3000, NULL, 2, &TaskButtonHandle) != pdPASS){
         ESP_LOGE(TAGmain, "failed to create task");
     }
 
-    vTaskDelay(pdMS_TO_TICKS(10000));
+    ESP_LOGW(TAGmain, "You can push the button!");
+    // vTaskDelay(pdMS_TO_TICKS(20000));
 
-    ESP_LOGW(TAGmain, "Program finished");
     vTaskDelete(TaskButtonHandle);
 
     // button_handler();
