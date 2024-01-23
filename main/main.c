@@ -1,9 +1,5 @@
 #include <main.h>
-#include "spiffs_storage.h"
-#include "wifi.h"
-#include "http_client.h"
-#include "uart.h"
-#include "button.h"
+
 
 const static char* TAGmain = "main_app";
 

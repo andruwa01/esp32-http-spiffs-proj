@@ -7,6 +7,13 @@
 #include <stdio.h>
 #include <cJSON.h>
 
+// Source headers
+#include "spiffs_storage.h"
+#include "wifi.h"
+#include "http_client.h"
+#include "uart.h"
+#include "button.h"
+
 // ESP-IDF headers
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
