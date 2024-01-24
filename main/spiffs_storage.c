@@ -12,7 +12,7 @@
 
 static char* spiffs_tag = "spiffs";
 
-void add_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
+void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
     #ifdef ENABLE_SPIFFS_LOGS
         ESP_LOGI(spiffs_tag, "Writing to file . . .");
     #endif
@@ -46,11 +46,8 @@ void read_file_from_spiffs(char *path_to_spiffs_file){
     }
 }
 
-void spiffs_handler(){
-    // Delay, so we can wee info about initialization and partition
-    vTaskDelay(pdMS_TO_TICKS(2500));
-
-    ESP_LOGI(spiffs_tag, "Initializing spiffs. . .");  
+void initialize_spiffs(){
+    ESP_LOGI(spiffs_tag, "Initializing spiffs");  
 
     // Configurate structure for esp_vfs_spiffs_register
     esp_vfs_spiffs_conf_t conf_spiffs = {
@@ -64,20 +61,20 @@ void spiffs_handler(){
     esp_err_t spiffs_status = esp_vfs_spiffs_register(&conf_spiffs);
 
     #ifdef CHECK_SPIFFS
-    if (spiffs_status != ESP_OK){
-        if (spiffs_status == ESP_FAIL){
-            ESP_LOGE(spiffs_tag, "Failed to mount filesystem");
-        } else if (spiffs_status == ESP_ERR_NOT_FOUND){
-            ESP_LOGE(spiffs_tag, "Failed to find spiffs partition");
-        } else {
-            ESP_LOGE(spiffs_tag, "Failed to initialize SPIFFS (%s)", esp_err_to_name(spiffs_status));
-        }          
-    } 
+        if (spiffs_status != ESP_OK){
+            if (spiffs_status == ESP_FAIL){
+                ESP_LOGE(spiffs_tag, "Failed to mount filesystem");
+            } else if (spiffs_status == ESP_ERR_NOT_FOUND){
+                ESP_LOGE(spiffs_tag, "Failed to find spiffs partition");
+            } else {
+                ESP_LOGE(spiffs_tag, "Failed to initialize SPIFFS (%s)", esp_err_to_name(spiffs_status));
+            }          
+        } 
     #endif
 
     // Checking spiffs connection status (integrity of partition label)
     #ifdef SPIFFS_CHECK_ON_START
-        ESP_LOGI(spiffs_tag, "Performing SPIFFS_check(). . .");
+        ESP_LOGI(spiffs_tag, "Performing SPIFFS_check()");
         spiffs_status = esp_spiffs_check(conf_spiffs.partition_label);
         if (spiffs_status != ESP_OK) {
             ESP_LOGE(spiffs_tag, "SPIFFS_check() failed (%s)", esp_err_to_name(spiffs_status));

@@ -1,4 +1,4 @@
 #include "main.h"
 
-void get_rest_function();
+void initialize_get_request();
 char* get_data_result();

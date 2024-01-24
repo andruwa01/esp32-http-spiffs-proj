@@ -1,3 +1,3 @@
 #include "main.h"
 
-void wifi_connection();
+void initialize_wifi();

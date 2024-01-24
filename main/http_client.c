@@ -1,8 +1,6 @@
-#include "http_client.h"
-#include "time_converter.h"
-#include "satellite_data_parser.h"
+#include "main.h"
 
-const static char* TAGhttp = "HTTP";
+const static char* tag_http_client = "http_client";
 
 //==========GET request data NORBI===============//
 static int id = 46494;
@@ -23,10 +21,27 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
     case HTTP_EVENT_ON_DATA:
         event_counter++;
         // event_counter == 1 missed because we don't need this information
+        // from get response
         if(event_counter > 1){
+
             printf("Current data_len of data: %i\n", (int)evt->data_len);
             printf("Client HTTP_EVENT_ON_DATA, data value:\n%.*s\n",evt->data_len, (char*)evt->data);
             printf("\n");
+
+            // uart_send_message();
+
+            char event_data_buffer[(int)evt->data_len + 1]; 
+            strcat(event_data_buffer, (char*)evt->data);
+            strcat(event_data_buffer, "\n");
+
+            int sended_bytes = uart_write_bytes(UART_NUM_0, event_data_buffer, 3000);
+            ESP_LOGW(tag_http_client, "%i bytes sent", sended_bytes);
+
+            // event_counter = 0 so next time when we push the button - we also get
+            // only data package instead of something with HTML tags
+            // also we could use (int)evt->data_len in this if, but i suppose that solution
+            // with event_counter variable is better
+            event_counter = 0;
 
             #ifdef PARSE_DATA
                 json_parser((char*)evt->data);
@@ -39,7 +54,7 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
     return ESP_OK;
 }
 
-void get_rest_function(){
+void initialize_get_request(){
     char url_buffer[256];
 
     sprintf(url_buffer, "http://api.n2yo.com/rest/v1/satellite/radiopasses/%i/%f/%f/%f/%i/%i/&apiKey=%s", 
@@ -67,7 +82,6 @@ void get_rest_function(){
         .buffer_size = 4096,
         .method = HTTP_METHOD_GET,
         .event_handler = client_event_get_handler,
-        .transport_type = HTTP_TRANSPORT_OVER_SSL,
         .skip_cert_common_name_check = true
     };
 

@@ -9,10 +9,12 @@
 
 // Source headers
 #include "spiffs_storage.h"
+#include "nvs.h"
 #include "wifi.h"
 #include "http_client.h"
 #include "uart.h"
 #include "button.h"
+#include "freertos_handler.h"
 
 // ESP-IDF headers
 #include "freertos/FreeRTOS.h"
