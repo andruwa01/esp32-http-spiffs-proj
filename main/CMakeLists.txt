@@ -4,7 +4,7 @@ idf_component_register(
     # INCLUDE_DIRS "." 
 
     # New compile configuration
-    SRCS "main.c" "spiffs_storage.c" "nvs.c" "wifi.c" "http_client.c" "button.c" "freertos_handler.c" "uart.c"
+    SRCS "main.c" "spiffs_storage.c" "nvs.c" "wifi.c" "http_client.c" "button.c" "freertos_handler.c" "uart.c" "satellite_data_parser.c" "time_converter.c"
     INCLUDE_DIRS "."
 
     # Test compile configuration
@@ -14,4 +14,4 @@ idf_component_register(
 )
 
 # when use spiffs folder to initiate image
-# spiffs_create_partition_image(data_storage ../spiffs_image FLASH_IN_PROJECT)
+spiffs_create_partition_image(data_storage ../spiffs_image FLASH_IN_PROJECT)

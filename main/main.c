@@ -30,10 +30,7 @@ void app_main(void)
     // TaskHandle_t TaskButtonHandle = NULL;
     // if (xTaskCreate(xTaskButton, "button", 3000, NULL, 2, &TaskButtonHandle) != pdPASS){
     //     ESP_LOGE(tag_main, "failed to create task");
-    // }
-
-    // ESP_LOGW(tag_main, "You can push the button!");
-    // vTaskDelay(pdMS_TO_TICKS(20000));
+    // }>
 
     // vTaskDelete(TaskButtonHandle);
 
@@ -55,11 +52,11 @@ void app_main(void)
 
     // initialize_get_request();
 
-    // #ifdef USE_SPIFFS
-    //     read_file_from_spiffs("/spiffs/norbi.txt");
-    // #else
-    //     ESP_LOGW(tag_main, "You don't use spiffs!");
-    // #endif
+    #ifdef USE_SPIFFS
+        read_file_from_spiffs_file_and_format(SPIFFS_FILE_PATH, "data_storage");
+    #else
+        ESP_LOGW(tag_main, "You don't use spiffs!");
+    #endif
 
     //====================FIRST_VARIANT=======================//
 }

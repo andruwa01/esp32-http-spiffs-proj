@@ -1,8 +1,6 @@
-#include "time_converter.h"
-#include "satellite_data_parser.h"
-#include "spiffs_storage.h"
+#include "main.h"
 
-const static char *time_converter_tag = "time_converter";
+const static char *time_converter_tag = "satellite_data_parser";
 static char time_format[] = "%d.%m.%Y %H:%M";
 
 static int pass_number = 1;
@@ -17,7 +15,7 @@ void get_max_values_write_to_spiffs(double max_az_value, char *max_az_compass_va
 	sprintf(max_values, "maxAz: %lf\nmaxAzCompass: %s\nmaxEl: %lf\nmaxUTC: %s", max_az_value, max_az_compass_value, max_el_value, max_utc_converted);
 
 	#ifdef USE_SPIFFS
-		add_line_to_spiffs("/spiffs/norbi.txt", max_values);
+		add_line_to_spiffs(SPIFFS_FILE_PATH, max_values);
 	#else	
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
@@ -28,7 +26,7 @@ void get_az_compass_values_write_to_spiffs(char *start_az_compass_value, char *e
 	sprintf(az_compass_values, "startAzCompass: %s\nendAzCompass: %s", start_az_compass_value, end_az_compass_value);
 
 	#ifdef USE_SPIFFS
-		add_line_to_spiffs("/spiffs/norbi.txt", az_compass_values);
+		add_line_to_spiffs(SPIFFS_FILE_PATH, az_compass_values);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
@@ -39,7 +37,7 @@ void get_az_values_write_to_spiffs(double start_az_value, double end_az_value){
 	sprintf(az_values, "startAz: %lf\nendAz: %lf", start_az_value, end_az_value);
 
 	#ifdef USE_SPIFFS
-		add_line_to_spiffs("/spiffs/norbi.txt", az_values);
+		add_line_to_spiffs(SPIFFS_FILE_PATH, az_values);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
@@ -59,14 +57,14 @@ void calculate_time_write_to_spiffs(int start_utc, int end_utc){
 	sprintf(time_human_readable, "#%i start %s end %s", pass_number++, utc_converted_start, utc_converted_end);
 
 	#ifdef USE_SPIFFS
-		add_line_to_spiffs("/spiffs/norbi.txt", time_human_readable);
+		add_line_to_spiffs(SPIFFS_FILE_PATH, time_human_readable);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
 }
 
-void json_parser(char* string_to_parse){
-	ESP_LOGI(time_converter_tag, "Start parsing data . . .");
+void json_parse_and_write_data_from_http_response_to_spiffs(char* string_to_parse){
+	ESP_LOGW(time_converter_tag, "start parsing data");
 
 	cJSON *json_object = cJSON_Parse(string_to_parse);
 
@@ -148,6 +146,5 @@ void json_parser(char* string_to_parse){
 	}
 
 	cJSON_Delete(json_object);
-
-	ESP_LOGI(time_converter_tag, "Finish parsing data");
+	ESP_LOGW(time_converter_tag, "finish parsing data");
 }

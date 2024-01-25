@@ -1,7 +1,22 @@
-// ==== Options ====// 
+//====FUNCTIONS====// 
 #define USE_SPIFFS
+#define CHECK_SPIFFS
+#define SPIFFS_CHECK_ON_START
+#define PARTITION_LABEL "data_storage"
+
+#define CLEAR_SPIFFS_FILE_IF_IT_EXISTED_AFTER_READ_FROM_IT
+
 // #define PRINT_PACKAGE
 #define VORONEZH_UTC_CORRECTION
-// #define PARSE_DATA
 // #define ENABLE_TIME_CONVERTER_LOGS
 // #define ENABLE_SPIFFS_LOGS
+
+//===== PARAMS =====//
+
+#define SPIFFS_FILE_PATH "/spiffs/norbi.txt"
+
+#define HTTP_BUFFER_SIZE 4096
+
+// WARNING! COULD BE STACK OVERFLOW, LOOK AT CONFIG_ESP_MAIN_TASK_STACK_SIZE
+// in skkconfig / idf.py menuconfib  
+#define NUMBER_OF_SYMBOLS_IN_SPIFFS_FILE_TO_READ_FROM 4000
