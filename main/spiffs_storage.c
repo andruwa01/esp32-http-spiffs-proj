@@ -3,7 +3,7 @@
 static char* spiffs_tag = "spiffs_storage";
 
 void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
-    #ifdef ENABLE_SPIFFS_LOGS
+    #ifdef SPIFFS_LOGS
         ESP_LOGI(spiffs_tag, "Writing to file . . .");
     #endif
 
@@ -15,7 +15,7 @@ void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
         fprintf(fpw, "\n%s", text_to_write);
         fclose(fpw);
 
-        #ifdef ENABLE_SPIFFS_LOGS
+        #ifdef SPIFFS_LOGS
             ESP_LOGI(spiffs_tag, "Text successfully writed");
         #endif
     }
@@ -40,7 +40,7 @@ void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *part
         esp_spiffs_info(partition_label_to_format, &total, &used);
         ESP_LOGW(spiffs_tag, "total: %i, used: %i", total, used);
 
-        #ifdef CLEAR_SPIFFS_FILE_IF_IT_EXISTED_AFTER_READ_FROM_IT
+        #ifdef SPIFFS_CLEAR_FILE_AFTER_READ_FROM
             fclose(fopen(path_to_spiffs_file, "w"));
             ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
         #endif
@@ -57,15 +57,15 @@ void initialize_spiffs(){
     // Configurate structure for esp_vfs_spiffs_register
     esp_vfs_spiffs_conf_t conf_spiffs = {
         .base_path = "/spiffs",
-        .partition_label = PARTITION_LABEL,
-        .max_files = 2,
+        .partition_label = SPIFFS_PARTITION_LABEL,
+        .max_files = SPIFFS_MAX_FILES,
         .format_if_mount_failed = true
     };
 
     // Mount spiffs to vfs 
     esp_err_t spiffs_status = esp_vfs_spiffs_register(&conf_spiffs);
 
-    #ifdef CHECK_SPIFFS
+    #ifdef SPIFFS_CHECK
         if (spiffs_status != ESP_OK){
             if (spiffs_status == ESP_FAIL){
                 ESP_LOGE(spiffs_tag, "Failed to mount filesystem");
@@ -90,7 +90,7 @@ void initialize_spiffs(){
     #endif
 
     size_t total = 0, used = 0;
-    spiffs_status = esp_spiffs_info(PARTITION_LABEL, &total, &used);
+    spiffs_status = esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
 
     // ESP_LOGW(spiffs_tag, "patittion label: %s", conf_spiffs.partition_label);
 

@@ -54,7 +54,7 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
             // with event_counter variable is better
             event_counter = 0;
 
-            #ifdef USE_SPIFFS 
+            #ifdef SPIFFS_USE_FUNCTIONALITY
                 json_parse_and_write_data_from_http_response_to_spiffs((char*)evt->data);
             #else
                 ESP_LOGW(tag_http_client, "You don't use spiffs!");

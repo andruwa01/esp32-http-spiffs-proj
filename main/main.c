@@ -39,7 +39,7 @@ void app_main(void)
     //====================BUTTON==============================//
     //====================FIRST_VARIANT=======================//
 
-    // #ifdef USE_SPIFFS
+    // #ifdef SPIFFS_USE_FUNCTIONALITY
 	//     initialize_spiffs();
     // #endif
 
@@ -52,7 +52,7 @@ void app_main(void)
 
     // initialize_get_request();
 
-    #ifdef USE_SPIFFS
+    #ifdef SPIFFS_USE_FUNCTIONALITY
         read_file_from_spiffs_file_and_format(SPIFFS_FILE_PATH, "data_storage");
     #else
         ESP_LOGW(tag_main, "You don't use spiffs!");
