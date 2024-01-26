@@ -1,5 +1,5 @@
-name=norbi
-norad=46494
+name=RS52SB
+norad=57200
 freq=?
 bw=?
 sf=?

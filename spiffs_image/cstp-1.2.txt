@@ -1,5 +1,5 @@
-name=norbi
-norad=46494
+name=CSTP-1.2
+norad=57186
 freq=?
 bw=?
 sf=?

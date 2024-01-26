@@ -14,7 +14,9 @@ void xTaskButton(){
 }
 
 void initialize_freertos_tasks(){
+
     TaskHandle_t TaskButtonHandle = NULL;
+
     if (xTaskCreate(xTaskButton, "button", 3000, NULL, 2, &TaskButtonHandle) != pdPASS){
         ESP_LOGE(tag_freertos, "failed to create task");
     }
@@ -23,5 +25,6 @@ void initialize_freertos_tasks(){
     vTaskDelay(pdMS_TO_TICKS(TIME_TO_PUSH_BUTTON_MS));
 
     ESP_LOGW(tag_freertos, "%i seconds finished", TIME_TO_PUSH_BUTTON_MS);
+
     vTaskDelete(TaskButtonHandle);
 }

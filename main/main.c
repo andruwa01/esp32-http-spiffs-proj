@@ -14,9 +14,12 @@ const static char* tag_main = "main_app";
 void app_main(void)
 {
     //====================NEW_VARIANT==========================//
+    if(SPIFFS_NUMBER_OF_FILES > SPIFFS_MAX_FILES){
+        ESP_LOGE(tag_main, "ERROR: SPIFFS_NUMBER_OF_FILES is more than SPIFFS_MAX_FILES: CHANGE IT IN options.h");
+    }
+
     initialize_spiffs();
     initialize_nvs_flash();
-
     initialize_wifi();
     uart_configure();
     initialize_freertos_tasks();
@@ -50,13 +53,25 @@ void app_main(void)
     //     ret = nvs_flash_init();
     // }
 
+    //====================FIRST_VARIANT=======================//
+
     // initialize_get_request();
+    // #ifdef SPIFFS_USE_FUNCTIONALITY
+    //     char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
+    //     read_file_from_spiffs_file_and_format(spiffs_file_path, "data_storage")
+    // #elif
+    //     ESP_LOGW(tag_main, "You don't use spiffs!");
+    // #endif
 
     #ifdef SPIFFS_USE_FUNCTIONALITY
-        read_file_from_spiffs_file_and_format(SPIFFS_FILE_PATH, "data_storage");
+        // for(int file_number = 0; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){
+        for(int file_number = 1; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){ 
+            char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
+            sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, spiffs_file_names[file_number]);
+            read_file_from_spiffs_file_and_format(spiffs_file_path, "data_storage");
+            // printf("\n"); - give huge mistake
+        }
     #else
         ESP_LOGW(tag_main, "You don't use spiffs!");
     #endif
-
-    //====================FIRST_VARIANT=======================//
 }

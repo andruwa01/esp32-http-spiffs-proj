@@ -1,5 +1,5 @@
-name=norbi
-norad=46494
+name=fees
+norad=48082
 freq=?
 bw=?
 sf=?

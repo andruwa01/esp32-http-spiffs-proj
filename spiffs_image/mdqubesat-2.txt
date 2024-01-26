@@ -1,0 +1,8 @@
+name=MDQubeSAT-2
+norad=58665
+freq=?
+bw=?
+sf=?
+cr=?
+sw=?
+pl=?

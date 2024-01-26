@@ -85,7 +85,8 @@ void initialize_wifi(){
     if(bits & WIFI_CONNECTED_BIT){
         ESP_LOGI(TAG, "connected to ap, SSID: %s, password: %s", CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD);
     } else if(bits & WIFI_FAIL_BIT){
-        ESP_LOGI(TAG, "Failed to connect to SSID: %s, password: %s", CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD);
+        ESP_LOGE(TAG, "Failed to connect to SSID: %s, password: %s", CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD);
+        vTaskSuspend(NULL);
     } else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }

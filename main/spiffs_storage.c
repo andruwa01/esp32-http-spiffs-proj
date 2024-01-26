@@ -13,10 +13,11 @@ void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
         return;
     } else {
         fprintf(fpw, "\n%s", text_to_write);
+
         fclose(fpw);
 
         #ifdef SPIFFS_LOGS
-            ESP_LOGI(spiffs_tag, "Text successfully writed");
+            ESP_LOGI(spiffs_tag, "Text successfully writed to file %s", path_to_spiffs_file);
         #endif
     }
 }
@@ -30,8 +31,8 @@ void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *part
         return;
     } else {
         // TODO finish it
-        char buffer[NUMBER_OF_SYMBOLS_IN_SPIFFS_FILE_TO_READ_FROM];
-        fread(buffer, sizeof(char), NUMBER_OF_SYMBOLS_IN_SPIFFS_FILE_TO_READ_FROM, fpr);  
+        char buffer[SPIFFS_MAX_NUMBER_OF_SYMBOLS_IN_ONE_FILE];
+        fread(buffer, sizeof(char), SPIFFS_MAX_NUMBER_OF_SYMBOLS_IN_ONE_FILE, fpr);  
         ESP_LOGI(spiffs_tag, "File %s successfully readed, contents:\n%s", path_to_spiffs_file, buffer);
 
         fclose(fpr);
@@ -56,7 +57,7 @@ void initialize_spiffs(){
 
     // Configurate structure for esp_vfs_spiffs_register
     esp_vfs_spiffs_conf_t conf_spiffs = {
-        .base_path = "/spiffs",
+        .base_path = SPIFFS_BASE_PATH,
         .partition_label = SPIFFS_PARTITION_LABEL,
         .max_files = SPIFFS_MAX_FILES,
         .format_if_mount_failed = true
@@ -91,8 +92,6 @@ void initialize_spiffs(){
 
     size_t total = 0, used = 0;
     spiffs_status = esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
-
-    // ESP_LOGW(spiffs_tag, "patittion label: %s", conf_spiffs.partition_label);
 
     if(spiffs_status != ESP_OK){
         ESP_LOGE(spiffs_tag, "Failed to get SPIFFS partition info, error code: %s", esp_err_to_name(spiffs_status));

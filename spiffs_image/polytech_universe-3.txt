@@ -1,0 +1,8 @@
+name=Polytech_Universe-3
+norad=57191
+freq=?
+bw=?
+sf=?
+cr=?
+sw=?
+pl=?

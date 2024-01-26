@@ -1,0 +1,8 @@
+name=fossasat2e13
+norad=52776
+freq=?
+bw=?
+sf=?
+cr=?
+sw=?
+pl=?
