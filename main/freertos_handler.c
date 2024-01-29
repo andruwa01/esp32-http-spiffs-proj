@@ -1,6 +1,5 @@
 #include "freertos_handler.h"
 
-#define TIME_TO_PUSH_BUTTON_MS 20000
 
 const static char *tag_freertos = "freertos_manager";
 
@@ -22,8 +21,8 @@ void initialize_freertos_tasks(){
     }
 
     ESP_LOGW(tag_freertos, "You can push the button and have only %i seconds to do it, then app_main return", TIME_TO_PUSH_BUTTON_MS / 1000);
-    vTaskDelay(pdMS_TO_TICKS(TIME_TO_PUSH_BUTTON_MS));
 
+    vTaskDelay(pdMS_TO_TICKS(TIME_TO_PUSH_BUTTON_MS));
     ESP_LOGW(tag_freertos, "%i seconds finished", TIME_TO_PUSH_BUTTON_MS);
 
     vTaskDelete(TaskButtonHandle);

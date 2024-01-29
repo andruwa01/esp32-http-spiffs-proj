@@ -13,9 +13,7 @@ void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
         return;
     } else {
         fprintf(fpw, "\n%s", text_to_write);
-
         fclose(fpw);
-
         #ifdef SPIFFS_LOGS
             ESP_LOGI(spiffs_tag, "Text successfully writed to file %s", path_to_spiffs_file);
         #endif
@@ -24,16 +22,20 @@ void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
 
 void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *partition_label_to_format){
     ESP_LOGI(spiffs_tag, "Reading file");
-
     FILE* fpr = fopen(path_to_spiffs_file, "r");
     if(fpr == NULL){
         ESP_LOGE(spiffs_tag, "Failed to open file for reading");
         return;
     } else {
-        // TODO finish it
-        char buffer[SPIFFS_MAX_NUMBER_OF_SYMBOLS_IN_ONE_FILE];
-        fread(buffer, sizeof(char), SPIFFS_MAX_NUMBER_OF_SYMBOLS_IN_ONE_FILE, fpr);  
+        fseek(fpr, 0, SEEK_END);
+        int size_of_file = ftell(fpr);
+        char buffer[size_of_file];
+        fseek(fpr, 0, SEEK_SET);
+        fread(buffer, sizeof(char), size_of_file, fpr);  
         ESP_LOGI(spiffs_tag, "File %s successfully readed, contents:\n%s", path_to_spiffs_file, buffer);
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        // printf("File %s successfully readed, contents:\n%s", path_to_spiffs_file, buffer);
 
         fclose(fpr);
 
@@ -45,10 +47,6 @@ void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *part
             fclose(fopen(path_to_spiffs_file, "w"));
             ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
         #endif
-
-        // size_t total, used = 0;
-        // esp_spiffs_info(partition_label_to_format, &total, &used);
-        // ESP_LOGW(spiffs_tag, "Spiffs usage:\ntotal: %i, used: %i", total, used);
     }
 }
 
@@ -83,11 +81,25 @@ void initialize_spiffs(){
         ESP_LOGI(spiffs_tag, "Performing spiffs check");
         spiffs_status = esp_spiffs_check(conf_spiffs.partition_label);
         if (spiffs_status != ESP_OK) {
-            ESP_LOGE(spiffs_tag, "SPIFFS_check() failed (%s)", esp_err_to_name(spiffs_status));
+            ESP_LOGE(spiffs_tag, "spiffs check failed (%s)", esp_err_to_name(spiffs_status));
             return;
         } else {
-            ESP_LOGI(spiffs_tag, "SPIFFS_check() successful");
+            ESP_LOGI(spiffs_tag, "spiffs check successful");
         }
+    #endif
+
+    #if defined(SPIFFS_CLEAR_FILE_ON_START)
+    for(int file_number = 0; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){
+        char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
+        sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, spiffs_file_names[file_number]);
+        if(fclose(fopen(spiffs_file_path, "w")) != 0){
+            ESP_LOGE(spiffs_tag, "Error: can't open and close (clear) %s", spiffs_file_path);
+            vTaskDelete(NULL);
+        };
+        ESP_LOGW(spiffs_tag, "File %s was cleared", spiffs_file_path);
+    }
+    #else
+    ESP_LOGW(spiffs_tag, "You don't use spiffs!");
     #endif
 
     size_t total = 0, used = 0;

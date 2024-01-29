@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "time.h"
 #include "stdlib.h"
+#include <dirent.h>
 
 // Source headers
 #include "spiffs_storage.h"
@@ -30,6 +31,7 @@
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 #include "esp_spiffs.h"
+#include "esp_vfs.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "string.h"

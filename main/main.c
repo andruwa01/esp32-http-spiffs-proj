@@ -22,7 +22,10 @@ void app_main(void)
     initialize_nvs_flash();
     initialize_wifi();
     uart_configure();
-    initialize_freertos_tasks();
+    button_handler();
+
+    vTaskDelay(pdMS_TO_TICKS(TIME_TO_PUSH_BUTTON_MS));
+    // initialize_freertos_tasks();
 
     //====================NEW_VARIANT==========================//
 
@@ -63,15 +66,17 @@ void app_main(void)
     //     ESP_LOGW(tag_main, "You don't use spiffs!");
     // #endif
 
-    #ifdef SPIFFS_USE_FUNCTIONALITY
-        // for(int file_number = 0; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){
-        for(int file_number = 1; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){ 
+    #if defined(SPIFFS_READ_FROM_FILE)
+        for(int file_number = 0; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){ 
             char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
             sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, spiffs_file_names[file_number]);
-            read_file_from_spiffs_file_and_format(spiffs_file_path, "data_storage");
+            read_file_from_spiffs_file_and_format(spiffs_file_path, SPIFFS_PARTITION_LABEL);
             // printf("\n"); - give huge mistake
         }
     #else
         ESP_LOGW(tag_main, "You don't use spiffs!");
     #endif
+
+    // read_file_from_spiffs_file_and_format("/spiffs/norbi.txt", SPIFFS_PARTITION_LABEL);
+    // read_file_from_spiffs_file_and_format("/spiffs/rs52sv.txt", SPIFFS_PARTITION_LABEL);
 }

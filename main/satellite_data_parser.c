@@ -15,7 +15,7 @@ void get_max_values_write_to_spiffs(double max_az_value, char *max_az_compass_va
 	sprintf(max_values, "maxAz: %lf\nmaxAzCompass: %s\nmaxEl: %lf\nmaxUTC: %s", max_az_value, max_az_compass_value, max_el_value, max_utc_converted);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
-		add_line_to_spiffs(SPIFFS_FILE_PATH, max_values);
+		add_line_to_spiffs(SPIFFS_NORBI_FILE_PATH, max_values);
 	#else	
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
@@ -26,7 +26,7 @@ void get_az_compass_values_write_to_spiffs(char *start_az_compass_value, char *e
 	sprintf(az_compass_values, "startAzCompass: %s\nendAzCompass: %s", start_az_compass_value, end_az_compass_value);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
-		add_line_to_spiffs(SPIFFS_FILE_PATH, az_compass_values);
+		add_line_to_spiffs(SPIFFS_NORBI_FILE_PATH, az_compass_values);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
@@ -37,7 +37,7 @@ void get_az_values_write_to_spiffs(double start_az_value, double end_az_value){
 	sprintf(az_values, "startAz: %lf\nendAz: %lf", start_az_value, end_az_value);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
-		add_line_to_spiffs(SPIFFS_FILE_PATH, az_values);
+		add_line_to_spiffs(SPIFFS_NORBI_FILE_PATH, az_values);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
@@ -57,7 +57,7 @@ void calculate_time_write_to_spiffs(int start_utc, int end_utc){
 	sprintf(time_human_readable, "#%i start %s end %s", pass_number++, utc_converted_start, utc_converted_end);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
-		add_line_to_spiffs(SPIFFS_FILE_PATH, time_human_readable);
+		add_line_to_spiffs(SPIFFS_NORBI_FILE_PATH, time_human_readable);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
