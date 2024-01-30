@@ -6,7 +6,8 @@ const static char *button_tag = "gpio button";
 void button_callback(){    
     ESP_LOGI(button_tag, "Message from callback function");
     // uart_send_message();
-    initialize_get_request();
+    // initialize_get_request();
+    initialize_get_requests_for_all_satellites();
 }
 
 void button_handler(){

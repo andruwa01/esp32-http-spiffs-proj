@@ -24,8 +24,22 @@ void app_main(void)
     uart_configure();
     button_handler();
 
+    ESP_LOGW(tag_main, "You have only %i seconds to push the button, else logic could corrupt", TIME_TO_PUSH_BUTTON_MS / 1000);
     vTaskDelay(pdMS_TO_TICKS(TIME_TO_PUSH_BUTTON_MS));
-    // initialize_freertos_tasks();
+
+    #if defined(SPIFFS_READ_FROM_FILE)
+        for(int file_number = 0; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){ 
+            char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
+            sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, spiffs_file_names[file_number]);
+            read_file_from_spiffs_file_and_format(spiffs_file_path, SPIFFS_PARTITION_LABEL);
+            // printf("\n"); - give huge mistake
+        }
+    #else
+        ESP_LOGW(tag_main, "You don't use spiffs!");
+    #endif
+
+    // read_file_from_spiffs_file_and_format("/spiffs/norbi.txt", SPIFFS_PARTITION_LABEL);
+    // read_file_from_spiffs_file_and_format("/spiffs/rs52sv.txt", SPIFFS_PARTITION_LABEL);
 
     //====================NEW_VARIANT==========================//
 
@@ -58,25 +72,4 @@ void app_main(void)
 
     //====================FIRST_VARIANT=======================//
 
-    // initialize_get_request();
-    // #ifdef SPIFFS_USE_FUNCTIONALITY
-    //     char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
-    //     read_file_from_spiffs_file_and_format(spiffs_file_path, "data_storage")
-    // #elif
-    //     ESP_LOGW(tag_main, "You don't use spiffs!");
-    // #endif
-
-    #if defined(SPIFFS_READ_FROM_FILE)
-        for(int file_number = 0; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){ 
-            char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
-            sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, spiffs_file_names[file_number]);
-            read_file_from_spiffs_file_and_format(spiffs_file_path, SPIFFS_PARTITION_LABEL);
-            // printf("\n"); - give huge mistake
-        }
-    #else
-        ESP_LOGW(tag_main, "You don't use spiffs!");
-    #endif
-
-    // read_file_from_spiffs_file_and_format("/spiffs/norbi.txt", SPIFFS_PARTITION_LABEL);
-    // read_file_from_spiffs_file_and_format("/spiffs/rs52sv.txt", SPIFFS_PARTITION_LABEL);
 }

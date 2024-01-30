@@ -1,4 +1,6 @@
 #include "main.h"
 
 void initialize_get_request();
-char* get_data_result();
+
+void initialize_get_requests_for_all_satellites();
+// char* get_data_result();

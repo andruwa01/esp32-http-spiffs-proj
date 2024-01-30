@@ -2,10 +2,9 @@
 
 const static char *time_converter_tag = "satellite_data_parser";
 static char time_format[] = "%d.%m.%Y %H:%M";
+int pass_number = 0;
 
-static int pass_number = 1;
-
-void get_max_values_write_to_spiffs(double max_az_value, char *max_az_compass_value, double max_el_value, int max_utc){
+void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value, char *max_az_compass_value, double max_el_value, int max_utc){
 	char max_values[128];
 	char max_utc_converted[32];
 
@@ -15,35 +14,35 @@ void get_max_values_write_to_spiffs(double max_az_value, char *max_az_compass_va
 	sprintf(max_values, "maxAz: %lf\nmaxAzCompass: %s\nmaxEl: %lf\nmaxUTC: %s", max_az_value, max_az_compass_value, max_el_value, max_utc_converted);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
-		add_line_to_spiffs(SPIFFS_NORBI_FILE_PATH, max_values);
+		add_line_to_spiffs(spiffs_file_path, max_values);
 	#else	
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
 }
 
-void get_az_compass_values_write_to_spiffs(char *start_az_compass_value, char *end_az_compass_value){
+void get_az_compass_values_write_to_spiffs(char *spiffs_file_path ,char *start_az_compass_value, char *end_az_compass_value){
 	char az_compass_values[128];
 	sprintf(az_compass_values, "startAzCompass: %s\nendAzCompass: %s", start_az_compass_value, end_az_compass_value);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
-		add_line_to_spiffs(SPIFFS_NORBI_FILE_PATH, az_compass_values);
+		add_line_to_spiffs(spiffs_file_path, az_compass_values);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
 }
 
-void get_az_values_write_to_spiffs(double start_az_value, double end_az_value){
+void get_az_values_write_to_spiffs(char *spiffs_file_path, double start_az_value, double end_az_value){
 	char az_values[128];
 	sprintf(az_values, "startAz: %lf\nendAz: %lf", start_az_value, end_az_value);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
-		add_line_to_spiffs(SPIFFS_NORBI_FILE_PATH, az_values);
+		add_line_to_spiffs(spiffs_file_path, az_values);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
 }
 
-void calculate_time_write_to_spiffs(int start_utc, int end_utc){
+void calculate_time_write_to_spiffs(int passes_counter, char *spiffs_file_path, int start_utc, int end_utc){
 	char utc_converted_start[32];
 	char time_human_readable[128];
 	char utc_converted_end[32];
@@ -54,16 +53,24 @@ void calculate_time_write_to_spiffs(int start_utc, int end_utc){
 	time_converter(&time_to_convert_start, time_format, utc_converted_start, sizeof(utc_converted_start));
 	time_converter(&time_to_convert_end, time_format, utc_converted_end, sizeof(utc_converted_end));
 
-	sprintf(time_human_readable, "#%i start %s end %s", pass_number++, utc_converted_start, utc_converted_end);
+	// algorithm of indexing -> to count the passes and printing them into files in right way
+	int local_pass_number = 0;
+	if(++pass_number == passes_counter){
+		local_pass_number = pass_number;
+		pass_number = 0;
+	} else {
+		local_pass_number = pass_number;
+	}
 
+	sprintf(time_human_readable, "#%i start %s end %s", local_pass_number, utc_converted_start, utc_converted_end);
 	#ifdef SPIFFS_USE_FUNCTIONALITY
-		add_line_to_spiffs(SPIFFS_NORBI_FILE_PATH, time_human_readable);
+		add_line_to_spiffs(spiffs_file_path, time_human_readable);
 	#else
 		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
 	#endif
 }
 
-void json_parse_and_write_data_from_http_response_to_spiffs(char* http_data_response){
+void json_parse_and_write_data_from_http_response_to_spiffs(char *spiffs_file_path, char* http_data_response){
 	ESP_LOGW(time_converter_tag, "start parsing data");
 
 	cJSON *json_object = cJSON_Parse(http_data_response);
@@ -123,21 +130,26 @@ void json_parse_and_write_data_from_http_response_to_spiffs(char* http_data_resp
 		#endif
 
 		calculate_time_write_to_spiffs(
+			(int)cJSON_GetNumberValue(passes_count),
+			spiffs_file_path,
 			(int)cJSON_GetNumberValue(start_utc), 
 			(int)cJSON_GetNumberValue(end_utc)
 		);
 
 		get_az_values_write_to_spiffs(
+			spiffs_file_path,
 			cJSON_GetNumberValue(start_az), 
 			cJSON_GetNumberValue(end_az)
 		);
 
 		get_az_compass_values_write_to_spiffs(
+			spiffs_file_path,
 			cJSON_GetStringValue(start_az_compass), 
 			cJSON_GetStringValue(end_az_compass)
 		);
 
 		get_max_values_write_to_spiffs(
+			spiffs_file_path,
 			cJSON_GetNumberValue(max_az),
 			cJSON_GetStringValue(max_az_compass), 
 			cJSON_GetNumberValue(max_el), 

@@ -2,11 +2,10 @@
 
 // SPIFFS
 #define SPIFFS_USE_FUNCTIONALITY
-#define SPIFFS_CHECK
 #define SPIFFS_CHECK_ON_START
 #define SPIFFS_PARTITION_LABEL "data_storage"
 // #define SPIFFS_CLEAR_FILE_AFTER_READ_FROM
-// #define SPIFFS_CLEAR_FILE_ON_START
+#define SPIFFS_CLEAR_FILES_ON_START
 #define SPIFFS_MAX_FILES 15
 #define SPIFFS_MAX_FILE_NAME_LENGTH 25
 #define SPIFFS_MAX_NUMBER_OF_SYMBOLS_IN_ONE_FILE 4000
@@ -38,6 +37,29 @@ const static char spiffs_file_names[SPIFFS_MAX_FILES][SPIFFS_MAX_FILE_NAME_LENGT
     "tianqi-7.txt"
 };
 
+// struct satellites_filename_id{
+//     int satellite_id;
+//     char satellite_file_name[SPIFFS_MAX_FILE_NAME_LENGTH];
+// };
+
+// Modify it with structs
+const static int satellites_id[SPIFFS_MAX_FILES] = {
+    46494, // NORBI
+    57183, // 2023-**
+    57202, // cstp 1.1
+    57186, // cstp 1.2
+    48082, // fees
+    52776, // fossat
+    49338, // jilin
+    58664, // mdqubesat
+    57191, // polytech_universe
+    57200, // rs52sb
+    57208, // rs52sd
+    57205, // rs52se
+    57170, // rs52sg
+    57169, // rs52sv
+    54687, // tianqui-7
+};
 
 // #define SPIFFS_LOGS
 
@@ -49,7 +71,7 @@ const static char spiffs_file_names[SPIFFS_MAX_FILES][SPIFFS_MAX_FILE_NAME_LENGT
 
 #define SPIFFS_PARSE_RESPONSE
 #define HTTP_BUFFER_SIZE 4096
-#define TIME_TO_PUSH_BUTTON_MS 20000
+#define TIME_TO_PUSH_BUTTON_MS 60000
 
 // WARNING! COULD BE STACK OVERFLOW, LOOK AT CONFIG_ESP_MAIN_TASK_STACK_SIZE
 // in skkconfig / idf.py menuconfib  
