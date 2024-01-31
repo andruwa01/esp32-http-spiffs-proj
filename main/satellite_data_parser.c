@@ -1,7 +1,8 @@
 #include "main.h"
 
-const static char *time_converter_tag = "satellite_data_parser";
-static char time_format[] = "%d.%m.%Y %H:%M";
+static const char *time_converter_tag = "satellite_data_parser";
+static const char time_format[] = "%d.%m.%Y %H:%M";
+
 int pass_number = 0;
 
 void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value, char *max_az_compass_value, double max_el_value, int max_utc){
@@ -9,7 +10,7 @@ void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value,
 	char max_utc_converted[32];
 
 	time_t time_to_convert = (int)max_utc;
-	time_converter(&time_to_convert, time_format, max_utc_converted, sizeof(max_utc_converted));
+	time_converter(&time_to_convert, (char*)time_format, max_utc_converted, sizeof(max_utc_converted));
 
 	sprintf(max_values, "maxAz: %lf\nmaxAzCompass: %s\nmaxEl: %lf\nmaxUTC: %s", max_az_value, max_az_compass_value, max_el_value, max_utc_converted);
 
