@@ -1,5 +1,4 @@
-#include "button.h"
-#include "uart.h"
+#include "main.h"
 
 const static char *button_tag = "gpio button";
 
@@ -8,6 +7,8 @@ void button_callback(){
     // uart_send_message();
     // initialize_get_request();
     initialize_get_requests_for_all_satellites();
+    // initialize_get_request(49338, "jilin-01_gaofen_2f.txt");
+    // initialize_get_request(57191, "polytech_universe-3.txt");
 }
 
 void button_handler(){
@@ -30,6 +31,8 @@ void button_handler(){
     };
 
     iot_button_register_event_cb(gpio_btn, cfg, button_callback, NULL);
+    ESP_LOGW(button_tag, "You have only %i seconds to push the button, else logic could corrupt", TIME_TO_PUSH_BUTTON_MS / 1000);
+    vTaskDelay(pdMS_TO_TICKS(TIME_TO_PUSH_BUTTON_MS));
 } 
     
     

@@ -4,7 +4,8 @@ const static char* tag_http_client = "http_client";
 
 //==========GET request data NORBI===============//
 // static int id = 46494;
-static char temp_file_name[SPIFFS_MAX_FILE_NAME_LENGTH];
+
+static char temp_file_path[SPIFFS_MAX_FILE_NAME_LENGTH];
 
 // static int temp_id = 5;
 static float observer_lat = 51.671667;
@@ -34,8 +35,8 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
             printf("Current sizeof((char*)evt->data): %i\n", sizeof((char*)evt->data));
             printf("Current strlen((char*)evt->data): %i\n",strlen((char*)evt->data));
             printf("\n");
-
-            printf("data value from get response:\n%.*s\n",(int)evt->data_len, (char*)evt->data);
+ 
+            printf("data value from get response:%.*s",(int)evt->data_len, (char*)evt->data);
             printf("\n");
 
             // int sended_bytes = uart_write_bytes(UART_NUM_0, test_response_get_string, strlen(test_response_get_string));
@@ -57,7 +58,8 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
             event_counter = 0;
 
             #if defined(SPIFFS_USE_FUNCTIONALITY)
-                json_parse_and_write_data_from_http_response_to_spiffs((char*)temp_file_name, (char*)evt->data);
+                json_parse_and_write_data_from_http_response_to_spiffs((char*)temp_file_path, (char*)evt->data);
+                // json_parse_and_write_data_from_http_response_to_spiffs("/spiffs/jilin-01_gaofen_2f.txt", (char*)evt->data);
             #else
                 ESP_LOGW(tag_http_client, "You don't use spiffs!");
             #endif
@@ -72,11 +74,12 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
 
 
 void initialize_get_request(int sat_id, char *file_name){
-    char spiffs_temp_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
+
+    char spiffs_temp_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + strlen(file_name)];
     sprintf(spiffs_temp_file_path, "%s/%s", SPIFFS_BASE_PATH, file_name);
 
     // now we work with tem_file_name in client_event_get_handler 
-    strcpy(temp_file_name, spiffs_temp_file_path);
+    strcpy(temp_file_path, spiffs_temp_file_path);
 
     char url_buffer[256];
 
@@ -105,7 +108,8 @@ void initialize_get_request(int sat_id, char *file_name){
         .buffer_size = HTTP_BUFFER_SIZE,
         .method = HTTP_METHOD_GET,
         .event_handler = client_event_get_handler,
-        .skip_cert_common_name_check = true
+        .skip_cert_common_name_check = true,
+        .timeout_ms = 5000
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&config_get);

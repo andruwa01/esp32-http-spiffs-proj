@@ -1,3 +1,4 @@
+#include "sdkconfig.h"
 //====FUNCTIONS====// 
 
 // SPIFFS
@@ -7,9 +8,9 @@
 // #define SPIFFS_CLEAR_FILE_AFTER_READ_FROM
 #define SPIFFS_CLEAR_FILES_ON_START
 #define SPIFFS_MAX_FILES 15
-#define SPIFFS_MAX_FILE_NAME_LENGTH 25
+#define SPIFFS_MAX_FILE_NAME_LENGTH CONFIG_SPIFFS_OBJ_NAME_LEN - 8 // CONFIG_SPIFFS_OBJ_NAME_LEN - strlen("/spiffs/")
 #define SPIFFS_MAX_NUMBER_OF_SYMBOLS_IN_ONE_FILE 4000
-#define SPIFFS_READ_FROM_FILE
+#define SPIFFS_READ_ALL_FILES
 
 #define SPIFFS_NUMBER_OF_FILES sizeof(spiffs_file_names) / sizeof(spiffs_file_names[0])
 
@@ -19,16 +20,16 @@
 
 #define SPIFFS_FILE_PATH SPIFFS_NORBI_FILE_PATH
 
-const static char spiffs_file_names[SPIFFS_MAX_FILES][SPIFFS_MAX_FILE_NAME_LENGTH] = {
+static char spiffs_file_names[SPIFFS_MAX_FILES][SPIFFS_MAX_FILE_NAME_LENGTH] = {
     "norbi.txt",
     "2023-091t.txt",
     "cstp-1.1.txt",
     "cstp-1.2.txt",
     "fees.txt",
-    "fossasat2e13.txt",
-    "jilin-01_gaofen_2f.txt",
+    "fossasat.txt",
+    "jilingaofen.txt",
     "mdqubesat-2.txt",
-    "polytech_universe-3.txt",
+    "polytech_un.txt",
     "rs52sb.txt",
     "rs52sd.txt",
     "rs52se.txt",
@@ -51,7 +52,7 @@ const static int satellites_id[SPIFFS_MAX_FILES] = {
     48082, // fees
     52776, // fossat
     49338, // jilin
-    58664, // mdqubesat
+    58665, // mdqubesat
     57191, // polytech_universe
     57200, // rs52sb
     57208, // rs52sd
@@ -70,7 +71,7 @@ const static int satellites_id[SPIFFS_MAX_FILES] = {
 //===== PARAMS =====//
 
 #define SPIFFS_PARSE_RESPONSE
-#define HTTP_BUFFER_SIZE 4096
+#define HTTP_BUFFER_SIZE 4128
 #define TIME_TO_PUSH_BUTTON_MS 60000
 
 // WARNING! COULD BE STACK OVERFLOW, LOOK AT CONFIG_ESP_MAIN_TASK_STACK_SIZE

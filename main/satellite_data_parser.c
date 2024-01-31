@@ -55,12 +55,14 @@ void calculate_time_write_to_spiffs(int passes_counter, char *spiffs_file_path, 
 
 	// algorithm of indexing -> to count the passes and printing them into files in right way
 	int local_pass_number = 0;
+
 	if(++pass_number == passes_counter){
 		local_pass_number = pass_number;
 		pass_number = 0;
 	} else {
 		local_pass_number = pass_number;
 	}
+
 
 	sprintf(time_human_readable, "#%i start %s end %s", local_pass_number, utc_converted_start, utc_converted_end);
 	#ifdef SPIFFS_USE_FUNCTIONALITY
@@ -131,25 +133,25 @@ void json_parse_and_write_data_from_http_response_to_spiffs(char *spiffs_file_pa
 
 		calculate_time_write_to_spiffs(
 			(int)cJSON_GetNumberValue(passes_count),
-			spiffs_file_path,
+			(char*)spiffs_file_path,
 			(int)cJSON_GetNumberValue(start_utc), 
 			(int)cJSON_GetNumberValue(end_utc)
 		);
 
 		get_az_values_write_to_spiffs(
-			spiffs_file_path,
+			(char*)spiffs_file_path,
 			cJSON_GetNumberValue(start_az), 
 			cJSON_GetNumberValue(end_az)
 		);
 
 		get_az_compass_values_write_to_spiffs(
-			spiffs_file_path,
+			(char*)spiffs_file_path,
 			cJSON_GetStringValue(start_az_compass), 
 			cJSON_GetStringValue(end_az_compass)
 		);
 
 		get_max_values_write_to_spiffs(
-			spiffs_file_path,
+			(char*)spiffs_file_path,
 			cJSON_GetNumberValue(max_az),
 			cJSON_GetStringValue(max_az_compass), 
 			cJSON_GetNumberValue(max_el), 

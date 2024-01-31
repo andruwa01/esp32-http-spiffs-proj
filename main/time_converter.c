@@ -16,7 +16,12 @@ void time_converter(time_t *time_to_convert, char *format_to_convert, char *buff
         localtime_r(time_to_convert, &time_buffer);
 
         #ifdef VORONEZH_UTC_CORRECTION
+        if(time_buffer.tm_hour > 20 && time_buffer.tm_hour < 24){
+                int previous_tm_hour = time_buffer.tm_hour;
+                time_buffer.tm_hour = 24 - (previous_tm_hour + 1); 
+        } else {
                 time_buffer.tm_hour += 3; //voronezh utc + 3
+        } 
         #endif
 
         //TODO write if for it and ESP_LOGE if something bad

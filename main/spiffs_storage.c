@@ -21,12 +21,12 @@ void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
     }
 }
 
-void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *partition_label_to_format){
+void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *partition_label){
     ESP_LOGI(spiffs_tag, "Reading file");
 
-    if(!esp_spiffs_mounted(SPIFFS_PARTITION_LABEL)){
+    // if(!esp_spiffs_mounted(partition_label)){
+    if(!esp_spiffs_mounted(partition_label)){
         ESP_LOGE(spiffs_tag, "ERROR! SPIFFS unmounted -> impossible to work!");
-        return;
     }
 
     FILE* fpr = fopen(path_to_spiffs_file, "r");
@@ -54,7 +54,7 @@ void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *part
         #endif
 
         size_t total = 0, used = 0;
-        esp_spiffs_info(partition_label_to_format, &total, &used);
+        esp_spiffs_info(partition_label, &total, &used);
         ESP_LOGW(spiffs_tag, "total: %i, used: %i", total, used);
     }
 }

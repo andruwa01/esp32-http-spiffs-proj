@@ -21,17 +21,18 @@ void app_main(void)
     initialize_spiffs();
     initialize_nvs_flash();
     initialize_wifi();
-    uart_configure();
-    button_handler();
+    // uart_configure();
+    // button_handler();
 
-    ESP_LOGW(tag_main, "You have only %i seconds to push the button, else logic could corrupt", TIME_TO_PUSH_BUTTON_MS / 1000);
-    vTaskDelay(pdMS_TO_TICKS(TIME_TO_PUSH_BUTTON_MS));
+    initialize_get_requests_for_all_satellites();
 
-    #if defined(SPIFFS_READ_FROM_FILE)
+    #if defined(SPIFFS_READ_ALL_FILES)
         for(int file_number = 0; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){ 
             char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
             sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, spiffs_file_names[file_number]);
             read_file_from_spiffs_file_and_format(spiffs_file_path, SPIFFS_PARTITION_LABEL);
+
+            vTaskDelay(pdMS_TO_TICKS(2500));
             // printf("\n"); - give huge mistake
         }
     #else
