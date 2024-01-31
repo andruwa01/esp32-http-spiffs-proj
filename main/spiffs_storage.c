@@ -98,9 +98,9 @@ void initialize_spiffs(){
     #endif
 
     #if defined(SPIFFS_CLEAR_FILES_ON_START)
-    for(int file_number = 0; file_number < SPIFFS_NUMBER_OF_FILES; file_number++){
+    for(int satellite_index = 0; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){
         char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
-        sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, spiffs_file_names[file_number]);
+        sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, satellites[satellite_index].name);
         if(fclose(fopen(spiffs_file_path, "w")) != 0){
             ESP_LOGE(spiffs_tag, "Error: can't open and close (clear) file %s", spiffs_file_path);
             return;

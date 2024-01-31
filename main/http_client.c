@@ -119,7 +119,8 @@ void initialize_get_request(int sat_id, char *file_name){
 }
 
 void initialize_get_requests_for_all_satellites(){
-    for(int file_number = 0; file_number < 15; file_number++){
-        initialize_get_request(satellites_id[file_number], spiffs_file_names[file_number]);
+    for(int satellite_index = 0; satellite_index < 15; satellite_index++){
+        // initialize_get_request(satellites_id[satellite_index], spiffs_file_names[satellite_index]);
+        initialize_get_request(satellites[satellite_index].id, satellites[satellite_index].name);
     }
 }

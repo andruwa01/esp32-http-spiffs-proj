@@ -87,9 +87,9 @@ void json_parse_and_write_data_from_http_response_to_spiffs(char *spiffs_file_pa
 
 	cJSON *info_elements = cJSON_GetObjectItemCaseSensitive(json_object, "info");
 
-	cJSON *sat_id = cJSON_GetObjectItemCaseSensitive(info_elements, "satid");
-	cJSON *sat_name = cJSON_GetObjectItemCaseSensitive(info_elements, "satname");
-	cJSON *transactions_count = cJSON_GetObjectItemCaseSensitive(info_elements, "transactionscount");
+	// cJSON *sat_id = cJSON_GetObjectItemCaseSensitive(info_elements, "satid");
+	// cJSON *sat_name = cJSON_GetObjectItemCaseSensitive(info_elements, "satname");
+	// cJSON *transactions_count = cJSON_GetObjectItemCaseSensitive(info_elements, "transactionscount");
 	cJSON *passes_count = cJSON_GetObjectItemCaseSensitive(info_elements, "passescount");
 
 	#ifdef PRINT_PACKAGE
