@@ -15,12 +15,13 @@ void time_converter(time_t *time_to_convert, char *format_to_convert, char *buff
         struct tm time_buffer;
         localtime_r(time_to_convert, &time_buffer);
 
+        // Voronezh utc + 3 and cases 21 22 23 pm (0 1 2 am)
         #ifdef VORONEZH_UTC_CORRECTION
         if(time_buffer.tm_hour > 20 && time_buffer.tm_hour < 24){
-                int previous_tm_hour = time_buffer.tm_hour;
-                time_buffer.tm_hour = 24 - (previous_tm_hour + 1); 
+                time_buffer.tm_hour -= 21; 
+                time_buffer.tm_mday += 1;
         } else {
-                time_buffer.tm_hour += 3; //voronezh utc + 3
+                time_buffer.tm_hour += 3;
         } 
         #endif
 
