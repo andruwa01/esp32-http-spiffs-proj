@@ -31,12 +31,11 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
             printf("\n");
 
             printf("Current (int)evt->data_len: %i\n", (int)evt->data_len);
-            printf("Current evt->data_len: %i\n", evt->data_len);
-            printf("Current sizeof((char*)evt->data): %i\n", sizeof((char*)evt->data));
-            printf("Current strlen((char*)evt->data): %i\n",strlen((char*)evt->data));
+
             printf("\n");
  
             printf("data value from get response:%.*s",(int)evt->data_len, (char*)evt->data);
+
             printf("\n");
 
             // int sended_bytes = uart_write_bytes(UART_NUM_0, test_response_get_string, strlen(test_response_get_string));
@@ -95,21 +94,21 @@ void initialize_get_request(int sat_id, char *file_name){
 
     esp_http_client_config_t config_get = {
         // use .host + .path or only .url
-
         // .url = "http://worldtimeapi.org/api/timezone/America/Argentina/Salta", //work
         // .url = "http://httpbin.org/get",                                       //work
-
-        // WARNING: disabled security options in menuconfig to work with this url 
-        // .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/25544/41.702/-76.014/0/10/40/&apiKey=VKC8LB-XBX436-NS9KSA-56EJ", // old data from api
-        .url = url_buffer,
         // .cert_pem = (const unsigned char*) certificate_pem_start,
         // .client_cert_pem = root_ca,
         // .cert_pem = root_ca_n2yo,
+
+        // WARNING: disabled security options in menuconfig to work with this url 
+        // .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/25544/41.702/-76.014/0/10/40/&apiKey=VKC8LB-XBX436-NS9KSA-56EJ", // old data from api
+
+        .url = url_buffer,
         .buffer_size = HTTP_BUFFER_SIZE,
         .method = HTTP_METHOD_GET,
         .event_handler = client_event_get_handler,
         .skip_cert_common_name_check = true,
-        .timeout_ms = 5000
+        .timeout_ms = HTTP_TIMOUT_MS
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&config_get);
@@ -119,8 +118,7 @@ void initialize_get_request(int sat_id, char *file_name){
 }
 
 void initialize_get_requests_for_all_satellites(){
-    for(int satellite_index = 0; satellite_index < 15; satellite_index++){
-        // initialize_get_request(satellites_id[satellite_index], spiffs_file_names[satellite_index]);
+    for(int satellite_index = 1; satellite_index < 3; satellite_index++){
         initialize_get_request(satellites[satellite_index].id, satellites[satellite_index].name);
     }
 }

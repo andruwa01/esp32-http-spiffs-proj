@@ -21,7 +21,43 @@ void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
     }
 }
 
-void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *partition_label){
+void clear_data_from_spiffs_file(char* path_to_spiffs_file){
+    fclose(fopen(path_to_spiffs_file, "w"));
+    ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
+}
+
+char* read_data_from_spiffs_file(char* path_to_spiffs_file){
+    ESP_LOGI(spiffs_tag, "reading file: %s", path_to_spiffs_file);
+
+    FILE* fpr = fopen(path_to_spiffs_file, "r"); 
+
+    if(fpr == NULL){
+        ESP_LOGE(spiffs_tag, "Failed to open file for reading");
+        return NULL;
+    }
+
+    fseek(fpr, 0, SEEK_END);
+    int size_of_file = ftell(fpr);
+    fseek(fpr, 0, SEEK_SET);
+
+    char buffer[size_of_file];
+    fread(buffer, sizeof(char), size_of_file, fpr);
+
+    // buffer[0] = '\0'; // add null-terminated symbol for correct print, if needs
+
+    fclose(fpr);
+    
+    ESP_LOGI(spiffs_tag, "Readed %i bytes from %s file", size_of_file, path_to_spiffs_file);
+
+    if(sizeof(buffer) == 0){
+        return "EMPTY";
+    }
+
+    return buffer;
+}
+
+
+void read_data_from_spiffs_file_and_format_partition(char *path_to_spiffs_file, char *partition_label){
     ESP_LOGI(spiffs_tag, "Reading file");
 
     // if(!esp_spiffs_mounted(partition_label)){
@@ -44,11 +80,11 @@ void read_file_from_spiffs_file_and_format(char *path_to_spiffs_file, char *part
         // Add null-terminated symbol so printf(or esp_logx) could correctly read string until
         // this symbol
         buffer[size_of_file] = '\0'; 
-        ESP_LOGI(spiffs_tag, "File %s successfully readed, contents:\n%s", path_to_spiffs_file, buffer);
+        ESP_LOGI(spiffs_tag, "File %s successfully readed, contents:%s", path_to_spiffs_file, buffer);
 
         fclose(fpr);
 
-        #ifdef SPIFFS_CLEAR_FILE_AFTER_READ_FROM
+        #ifdef SIPFFS_CLEAR_FILES_AFTER_RADING
             fclose(fopen(path_to_spiffs_file, "w"));
             ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
         #endif
