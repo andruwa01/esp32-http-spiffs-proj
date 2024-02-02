@@ -6,7 +6,7 @@ static const char* converter_tag = "time_converter";
 // static char default_format[] = "%d.%m.%Y %H:%M";
 
 
-void time_converter(time_t *time_to_convert, char *format_to_convert, char *buffer_for_converted_string, int size_of_buffer){
+void time_converter(time_t *time_to_convert, const char *format_to_convert, char *buffer_for_converted_string, int size_of_buffer){
 
         #ifdef ENABLE_TIME_CONVERTER_LOGS      
                 ESP_LOGI(converter_tag, "Start to convert time with format: %s", format_to_convert);

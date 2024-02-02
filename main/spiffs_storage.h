@@ -1,4 +1,4 @@
-#include "main.h"how to correctly read file from text file in spiffs
+#include "main.h"
 
 // Initializing spiffs with corresponding logs
 void initialize_spiffs();
@@ -14,4 +14,4 @@ void read_data_from_spiffs_file_and_format_partition(char *path_to_spiffs_file, 
 void clear_data_from_spiffs_file(char* path_to_spiffs_file);
 
 // Returns data from spiffs file
-char* read_data_from_spiffs_file(char* path_to_spiffs_file);
+void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size);

@@ -1,7 +1,7 @@
 #include "main.h"
 
 static char* spiffs_tag = "spiffs_storage";
-FILE *fp_to_end_of_default_content;
+// FILE *fp_to_end_of_default_content;
 
 void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
     #ifdef SPIFFS_LOGS
@@ -9,11 +9,12 @@ void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
     #endif
 
     FILE *fpw = fopen(path_to_spiffs_file, "a");
+
     if(fpw == NULL){
         ESP_LOGE(spiffs_tag, "Failed to open file for writing");
         return;
     } else {
-        fprintf(fpw, "\n%s", text_to_write);
+        fprintf(fpw, "%s\n", text_to_write);
         fclose(fpw);
         #ifdef SPIFFS_LOGS
             ESP_LOGI(spiffs_tag, "Text successfully writed to file %s", path_to_spiffs_file);
@@ -26,73 +27,30 @@ void clear_data_from_spiffs_file(char* path_to_spiffs_file){
     ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
 }
 
-char* read_data_from_spiffs_file(char* path_to_spiffs_file){
+void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size){
     ESP_LOGI(spiffs_tag, "reading file: %s", path_to_spiffs_file);
 
     FILE* fpr = fopen(path_to_spiffs_file, "r"); 
 
     if(fpr == NULL){
         ESP_LOGE(spiffs_tag, "Failed to open file for reading");
-        return NULL;
+        return;
     }
 
     fseek(fpr, 0, SEEK_END);
-    int size_of_file = ftell(fpr);
+    int size_of_spiffs_data = ftell(fpr);
     fseek(fpr, 0, SEEK_SET);
 
-    char buffer[size_of_file];
-    fread(buffer, sizeof(char), size_of_file, fpr);
+    if(size_of_spiffs_data > buffer_size){
+        ESP_LOGE(spiffs_tag, "ERROR! %i bytes don't fit in %i size buffer", size_of_spiffs_data, buffer_size);
+    }
 
-    // buffer[0] = '\0'; // add null-terminated symbol for correct print, if needs
+    fread(buffer_to_save_data, sizeof(char), size_of_spiffs_data, fpr);
+    buffer_to_save_data[size_of_spiffs_data] = '\0'; // add null-terminated symbol for correct print, if needs
 
     fclose(fpr);
-    
-    ESP_LOGI(spiffs_tag, "Readed %i bytes from %s file", size_of_file, path_to_spiffs_file);
 
-    if(sizeof(buffer) == 0){
-        return "EMPTY";
-    }
-
-    return buffer;
-}
-
-
-void read_data_from_spiffs_file_and_format_partition(char *path_to_spiffs_file, char *partition_label){
-    ESP_LOGI(spiffs_tag, "Reading file");
-
-    // if(!esp_spiffs_mounted(partition_label)){
-    if(!esp_spiffs_mounted(partition_label)){
-        ESP_LOGE(spiffs_tag, "ERROR! SPIFFS unmounted -> impossible to work!");
-    }
-
-    FILE* fpr = fopen(path_to_spiffs_file, "r");
-    if(fpr == NULL){
-        ESP_LOGE(spiffs_tag, "Failed to open file for reading");
-        return;
-    } else {
-        fseek(fpr, 0, SEEK_END);
-        int size_of_file = ftell(fpr);
-        ESP_LOGW(spiffs_tag, "size of %s is %i", path_to_spiffs_file, size_of_file);
-
-        char buffer[size_of_file];
-        fseek(fpr, 0, SEEK_SET);
-        fread(buffer, sizeof(char), size_of_file, fpr);  
-        // Add null-terminated symbol so printf(or esp_logx) could correctly read string until
-        // this symbol
-        buffer[size_of_file] = '\0'; 
-        ESP_LOGI(spiffs_tag, "File %s successfully readed, contents:%s", path_to_spiffs_file, buffer);
-
-        fclose(fpr);
-
-        #ifdef SIPFFS_CLEAR_FILES_AFTER_RADING
-            fclose(fopen(path_to_spiffs_file, "w"));
-            ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
-        #endif
-
-        size_t total = 0, used = 0;
-        esp_spiffs_info(partition_label, &total, &used);
-        ESP_LOGW(spiffs_tag, "total: %i, used: %i", total, used);
-    }
+    ESP_LOGI(spiffs_tag, "Readed %i bytes from %s file", size_of_spiffs_data, path_to_spiffs_file);
 }
 
 void initialize_spiffs(){
@@ -109,7 +67,7 @@ void initialize_spiffs(){
     // Mount spiffs to vfs 
     esp_err_t spiffs_status = esp_vfs_spiffs_register(&conf_spiffs);
 
-    #ifdef SPIFFS_CHECK_ON_START
+    #if defined(SPIFFS_CHECK_ON_START)
         if (spiffs_status != ESP_OK){
             if (spiffs_status == ESP_FAIL){
                 ESP_LOGE(spiffs_tag, "Failed to mount filesystem");
@@ -122,7 +80,7 @@ void initialize_spiffs(){
     #endif
 
     // Checking spiffs partition label
-    #ifdef SPIFFS_CHECK_ON_START
+    #if defined(SPIFFS_CHECK_ON_START)
         ESP_LOGI(spiffs_tag, "Performing spiffs check");
         spiffs_status = esp_spiffs_check(conf_spiffs.partition_label);
         if (spiffs_status != ESP_OK) {
@@ -135,7 +93,7 @@ void initialize_spiffs(){
 
     #if defined(SPIFFS_CLEAR_FILES_ON_START)
     for(int satellite_index = 0; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){
-        char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + SPIFFS_MAX_FILE_NAME_LENGTH];
+        char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + strlen(satellites[satellite_index].name)];
         sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, satellites[satellite_index].name);
         if(fclose(fopen(spiffs_file_path, "w")) != 0){
             ESP_LOGE(spiffs_tag, "Error: can't open and close (clear) file %s", spiffs_file_path);
@@ -149,7 +107,7 @@ void initialize_spiffs(){
     #endif
 
     size_t total = 0, used = 0;
-    spiffs_status = esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
+    spiffs_status = esp_spiffs_info(conf_spiffs.partition_label, &total, &used);
     if(spiffs_status != ESP_OK){
         ESP_LOGE(spiffs_tag, "Failed to get SPIFFS partition info, error code: %s", esp_err_to_name(spiffs_status));
         esp_spiffs_format(conf_spiffs.partition_label);

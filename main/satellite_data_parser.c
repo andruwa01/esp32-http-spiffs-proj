@@ -3,7 +3,7 @@
 static const char *time_converter_tag = "satellite_data_parser";
 static const char time_format[] = "%d.%m.%Y %H:%M";
 
-int pass_number = 0;
+static int pass_number = 0;
 
 void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value, char *max_az_compass_value, double max_el_value, int max_utc){
 	char max_values[128];
