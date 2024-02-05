@@ -19,6 +19,7 @@ void print_satellite_data(int satellite_index){
 
             char data_from_spiffs_file[HTTP_BUFFER_SIZE];
             read_data_from_spiffs_file_to_buffer(spiffs_file_path, data_from_spiffs_file, HTTP_BUFFER_SIZE);
+
             printf("%s\n", data_from_spiffs_file);
 
             #if defined(SIPFFS_CLEAR_FILES_AFTER_READING)
@@ -45,68 +46,24 @@ void app_main(void)
     initialize_wifi();
     uart_configure();
 
-    initialize_get_request(satellites[0].id, satellites[0].name);
-    print_satellite_data(0);
-
-    button_handler();
-
     #if defined(GET_REQUEST_ALL_SAT)
     initialize_get_requests_for_all_satellites();
     #endif
 
+    button_handler();
+
     #if defined(SPIFFS_READ_ALL_FILES)
-        for(int satellite_index = 0; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){ 
-            print_satellite_data(satellite_index);
-        }
-        size_t total, used = 0;
-        esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
-        ESP_LOGW(tag_main, "total: %i, used: %i", total, used);
+
+    for(int satellite_index = 0; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){ 
+        print_satellite_data(satellite_index);
+    }
+    size_t total, used = 0;
+    esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
+    ESP_LOGW(tag_main, "total: %i, used: %i", total, used);
+
     #else
-        ESP_LOGW(tag_main, "You don't use spiffs!");
+
+    ESP_LOGW(tag_main, "You don't use spiffs!");
+
     #endif
-
-    // #if defined(SEND_DATA_FROM_SPIFFS_TO_UART)
-    // char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + strlen(satellites[0].name)];
-    // sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, satellites[0].name);
-
-    // char satellite_data[HTTP_BUFFER_SIZE];
-    // read_data_from_spiffs_file_to_buffer(spiffs_file_path, satellite_data, HTTP_BUFFER_SIZE);
-
-    // // write_data_from_spiffs_file_to_uart(); // push all data to uart -> TODO
-    // #endif
-
-    // read_data_from_spiffs_file_and_format_partition("/spiffs/norbi.txt", SPIFFS_PARTITION_LABEL);
-    // read_data_from_spiffs_file_and_format_partition("/spiffs/rs52sv.txt", SPIFFS_PARTITION_LABEL);
-
-    //====================NEW_VARIANT==========================//
-
-    //====================BUTTON==============================//
-
-    // uart_configure();
-    
-    // TaskHandle_t TaskButtonHandle = NULL;
-    // if (xTaskCreate(xTaskButton, "button", 3000, NULL, 2, &TaskButtonHandle) != pdPASS){
-    //     ESP_LOGE(tag_main, "failed to create task");
-    // }>
-
-    // vTaskDelete(TaskButtonHandle);
-
-    // uart_configure();
-
-    //====================BUTTON==============================//
-    //====================FIRST_VARIANT=======================//
-
-    // #ifdef SPIFFS_USE_FUNCTIONALITY
-	//     initialize_spiffs();
-    // #endif
-
-    // esp_err_t ret = nvs_flash_init();
-
-    // if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND){
-    //     ESP_ERROR_CHECK(nvs_flash_erase());
-    //     ret = nvs_flash_init();
-    // }
-
-    //====================FIRST_VARIANT=======================//
-
 }

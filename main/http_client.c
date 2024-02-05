@@ -20,7 +20,7 @@ satellite satellites[SPIFFS_NUMBER_OF_FILES] = {
     {.name = "2023-091t.txt",   .id = 57183},
     {.name = "cstp-1.1.txt",    .id = 57202},
     {.name = "cstp-1.2.txt",    .id = 57186},
-    {.name = "fees.txt",        .id = 48082},
+    {.name = "fees_sat.txt",    .id = 48082},
     {.name = "fossasat.txt",    .id = 52776},
     {.name = "jilingaofen.txt", .id = 49338},
     {.name = "mdqubesat-2.txt", .id = 58665}, 
@@ -91,7 +91,7 @@ void initialize_get_request(int sat_id, char *file_name){
     char spiffs_temp_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + strlen(file_name)];
     sprintf(spiffs_temp_file_path, "%s/%s", SPIFFS_BASE_PATH, file_name);
 
-    // now we work with tem_file_name in client_event_get_handler 
+    // now we work with temp_file_name in client_event_get_handler 
     strcpy(temp_file_path, spiffs_temp_file_path);
 
     char url_buffer[256];
@@ -108,15 +108,6 @@ void initialize_get_request(int sat_id, char *file_name){
 
     esp_http_client_config_t config_get = {
         // use .host + .path or only .url
-        // .url = "http://worldtimeapi.org/api/timezone/America/Argentina/Salta", //work
-        // .url = "http://httpbin.org/get",                                       //work
-        // .cert_pem = (const unsigned char*) certificate_pem_start,
-        // .client_cert_pem = root_ca,
-        // .cert_pem = root_ca_n2yo,
-
-        // WARNING: disabled security options in menuconfig to work with this url 
-        // .url = "http://api.n2yo.com/rest/v1/satellite/radiopasses/25544/41.702/-76.014/0/10/40/&apiKey=VKC8LB-XBX436-NS9KSA-56EJ", // old data from api
-
         .url = url_buffer,
         .buffer_size = HTTP_BUFFER_SIZE,
         .method = HTTP_METHOD_GET,
@@ -132,7 +123,7 @@ void initialize_get_request(int sat_id, char *file_name){
 }
 
 void initialize_get_requests_for_all_satellites(){
-    for(int satellite_index = 1; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){
+    for(int satellite_index = 0; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){
         initialize_get_request(satellites[satellite_index].id, satellites[satellite_index].name);
     }
 }

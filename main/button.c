@@ -1,20 +1,23 @@
 #include "main.h"
 
-const static char *button_tag = "gpio button";
+const static char *button_tag = "gpio_button";
 
 void button_callback(){    
     ESP_LOGI(button_tag, "Message from callback function");
 
     #if defined(SEND_DATA_FROM_SPIFFS_TO_UART)
-    char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + strlen(satellites[0].name)];
-    sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, satellites[0].name);
 
-    char satellite_data[HTTP_BUFFER_SIZE];
-    read_data_from_spiffs_file_to_buffer(spiffs_file_path, satellite_data, HTTP_BUFFER_SIZE);
+    for(int file_index = 0; file_index < SPIFFS_NUMBER_OF_FILES; file_index++){
+        char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + strlen(satellites[file_index].name)];
+        sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, satellites[file_index].name);
 
-    int sended_bytes = uart_write_bytes(UART_NUM_0, (const char*)satellite_data, strlen(satellite_data));
-    ESP_LOGW(button_tag, "%i bytes were sended", sended_bytes);
+        char satellite_data[HTTP_BUFFER_SIZE];
+        read_data_from_spiffs_file_to_buffer(spiffs_file_path, satellite_data, HTTP_BUFFER_SIZE);
+        strcat(satellite_data, "END_OF_THE_FILE\n");
 
+        int sended_bytes = uart_write_bytes(UART_NUM_0, (const char*)satellite_data, strlen(satellite_data));
+        ESP_LOGW(button_tag, "%i bytes were sended", sended_bytes);
+    }
     #endif
 
     // uart_send_message();

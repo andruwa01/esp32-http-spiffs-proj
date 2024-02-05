@@ -5,6 +5,17 @@ static const char time_format[] = "%d.%m.%Y %H:%M";
 
 static int pass_number = 0;
 
+void get_info_values_write_to_spiffs(char* spiffs_file_path, int sat_id, char* sat_name, int transactions_count, int passes_count){
+	char info_values[256];
+	sprintf(info_values, "sat_id: %i\nsat_name: %s\ntransactions_count: %i\npasses_count: %i\n", sat_id, sat_name, transactions_count, passes_count);
+
+	#ifdef SPIFFS_USE_FUNCTIONALITY
+		add_line_to_spiffs(spiffs_file_path, info_values);
+	#else	
+		ESP_LOGW(time_converter_tag, "You don't use spiffs!");
+	#endif
+}
+
 void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value, char *max_az_compass_value, double max_el_value, int max_utc){
 	char max_values[128];
 	char max_utc_converted[32];
@@ -12,7 +23,7 @@ void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value,
 	time_t time_to_convert = (int)max_utc;
 	time_converter(&time_to_convert, (char*)time_format, max_utc_converted, sizeof(max_utc_converted));
 
-	sprintf(max_values, "maxAz: %lf\nmaxAzCompass: %s\nmaxEl: %lf\nmaxUTC: %s", max_az_value, max_az_compass_value, max_el_value, max_utc_converted);
+	sprintf(max_values, "maxAz: %lf\nmaxAzCompass: %s\nmaxEl: %lf\nmaxUTC: %s\n", max_az_value, max_az_compass_value, max_el_value, max_utc_converted);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
 		add_line_to_spiffs(spiffs_file_path, max_values);
@@ -23,7 +34,7 @@ void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value,
 
 void get_az_compass_values_write_to_spiffs(char *spiffs_file_path ,char *start_az_compass_value, char *end_az_compass_value){
 	char az_compass_values[128];
-	sprintf(az_compass_values, "startAzCompass: %s\nendAzCompass: %s", start_az_compass_value, end_az_compass_value);
+	sprintf(az_compass_values, "startAzCompass: %s\nendAzCompass: %s\n", start_az_compass_value, end_az_compass_value);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
 		add_line_to_spiffs(spiffs_file_path, az_compass_values);
@@ -34,7 +45,7 @@ void get_az_compass_values_write_to_spiffs(char *spiffs_file_path ,char *start_a
 
 void get_az_values_write_to_spiffs(char *spiffs_file_path, double start_az_value, double end_az_value){
 	char az_values[128];
-	sprintf(az_values, "startAz: %lf\nendAz: %lf", start_az_value, end_az_value);
+	sprintf(az_values, "startAz: %lf\nendAz: %lf\n", start_az_value, end_az_value);
 
 	#ifdef SPIFFS_USE_FUNCTIONALITY
 		add_line_to_spiffs(spiffs_file_path, az_values);
@@ -64,8 +75,7 @@ void calculate_time_write_to_spiffs(int passes_counter, char *spiffs_file_path, 
 		local_pass_number = pass_number;
 	}
 
-
-	sprintf(time_human_readable, "#%i start %s end %s", local_pass_number, utc_converted_start, utc_converted_end);
+	sprintf(time_human_readable, "#%i start %s end %s\n", local_pass_number, utc_converted_start, utc_converted_end);
 	#ifdef SPIFFS_USE_FUNCTIONALITY
 		add_line_to_spiffs(spiffs_file_path, time_human_readable);
 	#else
@@ -86,12 +96,11 @@ void json_parse_and_write_data_from_http_response_to_spiffs(char *spiffs_file_pa
 		cJSON_Delete(json_object);
 	}
 
-	cJSON *info_elements = cJSON_GetObjectItemCaseSensitive(json_object, "info");
-
-	// cJSON *sat_id = cJSON_GetObjectItemCaseSensitive(info_elements, "satid");
-	// cJSON *sat_name = cJSON_GetObjectItemCaseSensitive(info_elements, "satname");
-	// cJSON *transactions_count = cJSON_GetObjectItemCaseSensitive(info_elements, "transactionscount");
-	cJSON *passes_count = cJSON_GetObjectItemCaseSensitive(info_elements, "passescount");
+	cJSON *info_elements 		= cJSON_GetObjectItemCaseSensitive(json_object, "info");
+	cJSON *sat_id 				= cJSON_GetObjectItemCaseSensitive(info_elements, "satid");
+	cJSON *sat_name 			= cJSON_GetObjectItemCaseSensitive(info_elements, "satname");
+	cJSON *transactions_count   = cJSON_GetObjectItemCaseSensitive(info_elements, "transactionscount");
+	cJSON *passes_count 		= cJSON_GetObjectItemCaseSensitive(info_elements, "passescount");
 
 	#ifdef PRINT_PACKAGE
 	if(cJSON_IsNumber(sat_id) && cJSON_IsString(sat_name) && cJSON_IsNumber(transactions_count) && cJSON_IsNumber(passes_count)){
@@ -104,19 +113,27 @@ void json_parse_and_write_data_from_http_response_to_spiffs(char *spiffs_file_pa
 	}
 	#endif
 
+	get_info_values_write_to_spiffs(
+		(char*)spiffs_file_path,
+		(int)cJSON_GetNumberValue(sat_id),
+		cJSON_GetStringValue(sat_name),
+		(int)cJSON_GetNumberValue(transactions_count),
+		(int)cJSON_GetNumberValue(passes_count)
+	);
+
 	cJSON *pass = NULL;
 	cJSON *passes = cJSON_GetObjectItemCaseSensitive(json_object, "passes");
 	cJSON_ArrayForEach(pass, passes){
-		cJSON *start_az = cJSON_GetObjectItemCaseSensitive(pass, "startAz"); 
+		cJSON *start_az 		= cJSON_GetObjectItemCaseSensitive(pass, "startAz"); 
 		cJSON *start_az_compass = cJSON_GetObjectItemCaseSensitive(pass, "startAzCompass");
-		cJSON *start_utc = cJSON_GetObjectItemCaseSensitive(pass, "startUTC");
-		cJSON *max_az = cJSON_GetObjectItemCaseSensitive(pass, "maxAz");
-		cJSON *max_az_compass = cJSON_GetObjectItemCaseSensitive(pass, "maxAzCompass");
-		cJSON *max_el = cJSON_GetObjectItemCaseSensitive(pass, "maxEl");
-		cJSON *max_utc = cJSON_GetObjectItemCaseSensitive(pass, "maxUTC");
-		cJSON *end_az = cJSON_GetObjectItemCaseSensitive(pass, "endAz");
-		cJSON *end_az_compass = cJSON_GetObjectItemCaseSensitive(pass, "endAzCompass");
-		cJSON *end_utc = cJSON_GetObjectItemCaseSensitive(pass, "endUTC");
+		cJSON *start_utc 		= cJSON_GetObjectItemCaseSensitive(pass, "startUTC");
+		cJSON *max_az 			= cJSON_GetObjectItemCaseSensitive(pass, "maxAz");
+		cJSON *max_az_compass 	= cJSON_GetObjectItemCaseSensitive(pass, "maxAzCompass");
+		cJSON *max_el 			= cJSON_GetObjectItemCaseSensitive(pass, "maxEl");
+		cJSON *max_utc 			= cJSON_GetObjectItemCaseSensitive(pass, "maxUTC");
+		cJSON *end_az 			= cJSON_GetObjectItemCaseSensitive(pass, "endAz");
+		cJSON *end_az_compass 	= cJSON_GetObjectItemCaseSensitive(pass, "endAzCompass");
+		cJSON *end_utc 			= cJSON_GetObjectItemCaseSensitive(pass, "endUTC");
 
 		#ifdef PRINT_PACKAGE
 		printf("\n");

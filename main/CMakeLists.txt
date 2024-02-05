@@ -14,4 +14,4 @@ idf_component_register(
 )
 
 # when use spiffs folder to initiate partition
-spiffs_create_partition_image(data_storage ../spiffs_image FLASH_IN_PROJECT)
+# spiffs_create_partition_image(data_storage ../spiffs_image FLASH_IN_PROJECT)

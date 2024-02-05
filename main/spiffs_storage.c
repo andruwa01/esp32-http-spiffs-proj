@@ -14,7 +14,7 @@ void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
         ESP_LOGE(spiffs_tag, "Failed to open file for writing");
         return;
     } else {
-        fprintf(fpw, "%s\n", text_to_write);
+        fprintf(fpw, "%s", text_to_write);
         fclose(fpw);
         #ifdef SPIFFS_LOGS
             ESP_LOGI(spiffs_tag, "Text successfully writed to file %s", path_to_spiffs_file);
@@ -46,11 +46,12 @@ void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffe
     }
 
     fread(buffer_to_save_data, sizeof(char), size_of_spiffs_data, fpr);
+
     buffer_to_save_data[size_of_spiffs_data] = '\0'; // add null-terminated symbol for correct print, if needs
 
     fclose(fpr);
 
-    ESP_LOGI(spiffs_tag, "Readed %i bytes from %s file", size_of_spiffs_data, path_to_spiffs_file);
+    ESP_LOGI(spiffs_tag, "Readed %i bytes from %s file:", size_of_spiffs_data, path_to_spiffs_file);
 }
 
 void initialize_spiffs(){
