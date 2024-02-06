@@ -48,8 +48,7 @@ void button_handler(){
 
     iot_button_register_event_cb(gpio_btn, cfg, button_callback, NULL);
 
-    ESP_LOGW(button_tag, "You have only %i seconds to push the button, else logic could corrupt", TIME_TO_PUSH_BUTTON_MS / 1000);
-    vTaskDelay(pdMS_TO_TICKS(TIME_TO_PUSH_BUTTON_MS));
+    ESP_LOGW(button_tag, "Button was initiated!");
 } 
     
     

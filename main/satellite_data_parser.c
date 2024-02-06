@@ -113,6 +113,7 @@ void json_parse_and_write_data_from_http_response_to_spiffs(char *spiffs_file_pa
 	}
 	#endif
 
+
 	get_info_values_write_to_spiffs(
 		(char*)spiffs_file_path,
 		(int)cJSON_GetNumberValue(sat_id),
