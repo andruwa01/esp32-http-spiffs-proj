@@ -9,6 +9,7 @@
 #include "time.h"
 #include "stdlib.h"
 #include <dirent.h>
+#include <stdbool.h>
 
 // Source headers
 #include "spiffs_storage.h"
@@ -22,6 +23,7 @@
 #include "freertos_handler.h"
 #include "satellite_data_parser.h"
 #include "time_converter.h"
+#include "command_handler.h"
 
 // ESP-IDF headers
 #include "freertos/FreeRTOS.h"

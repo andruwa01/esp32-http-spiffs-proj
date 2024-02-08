@@ -36,7 +36,6 @@ void print_satellite_data(int satellite_index){
 
 void app_main(void)
 {
-    //====================NEW_VARIANT==========================//
     if(SPIFFS_NUMBER_OF_FILES > SPIFFS_MAX_FILES){
         ESP_LOGE(tag_main, "ERROR: SPIFFS_NUMBER_OF_FILES is more than SPIFFS_MAX_FILES: CHANGE IT IN options.h");
     }
@@ -46,11 +45,12 @@ void app_main(void)
     initialize_wifi();
     uart_configure();
 
-    #if defined(GET_REQUEST_ALL_SAT)
-    initialize_get_requests_for_all_satellites();
-    #endif
+    // initialize_get_request(satellites[0].id, satellites[0].name);
+    // initialize_get_request(satellites[1].id, satellites[1].name);
 
-    button_handler();
+    get_command_from_uart();
+
+    // button_handler();
 
     #if defined(SPIFFS_READ_ALL_FILES)
 

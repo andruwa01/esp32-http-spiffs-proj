@@ -15,7 +15,7 @@ const static char *api_key = N2YO_API_KEY;
 
 static int event_counter = 0;
 
-satellite satellites[SPIFFS_NUMBER_OF_FILES] = {
+satellite_data satellites[SPIFFS_NUMBER_OF_FILES] = {
     {.name = "norbi.txt",       .id = 46494},
     {.name = "2023-091t.txt",   .id = 57183},
     {.name = "cstp-1.1.txt",    .id = 57202},
