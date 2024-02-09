@@ -3,7 +3,7 @@
 const static char* command_handler_tag = "command_handler";
 const static char next_action_value[16] = "NEXT_ACTION\n";
 
-void response_next_action(){
+static void response_next_action(){
     int data_length_bytes = 0;
     data_length_bytes = uart_write_bytes(UART_NUM_0, &next_action_value, strlen(next_action_value));
     ESP_LOGW(command_handler_tag, "%i bytes were sended", data_length_bytes);
@@ -25,7 +25,6 @@ void get_command_from_uart(){
 
     bool listen_uart = true;
     while(listen_uart){
-        
         ESP_LOGW(command_handler_tag, "Waiting new command. . .");
 
         char command_buffer[NUMBER_OF_CHARS_IN_BUFFER_FOR_UART_DATA] = "";
@@ -45,7 +44,7 @@ void get_command_from_uart(){
             ESP_LOGW(command_handler_tag, "%i bytes was readed, contents: %s", data_length_bytes, (char*)command_buffer);
         }
 
-        if(strcmp(command_buffer, "make_requests") == 0)
+        if(strcmp(command_buffer, "get all") == 0)
         {
             #if defined(GET_REQUEST_ALL_SAT)
             initialize_get_requests_for_all_satellites();
@@ -62,7 +61,7 @@ void get_command_from_uart(){
             response_next_action();
 
         }
-        else if(strcmp(command_buffer, "get_list") == 0)
+        else if(strcmp(command_buffer, "update buffer") == 0)
         {
             uart_flush_input(UART_NUM_0);
 
@@ -82,18 +81,12 @@ void get_command_from_uart(){
             #endif
 
 
-            vTaskDelay(pdMS_TO_TICKS(15000)); // wait for not sending info about next action to package
+            // vTaskDelay(pdMS_TO_TICKS(15000)); // wait for not sending info about next action to package
+            vTaskDelay(pdMS_TO_TICKS(21000));
 
             command_buffer[0] = '\0';
             response_next_action();
 
-        }
-        else if(strcmp(command_buffer, "stop") == 0)
-        {
-            listen_uart = false;
-            ESP_LOGW(command_handler_tag, "Waiting stopped");
-
-            response_next_action();
         }
         else
         {

@@ -1,6 +1,6 @@
 #include "sdkconfig.h"
 
-// #define GET_REQUEST_ALL_SAT
+#define GET_REQUEST_ALL_SAT
 
 #define SPIFFS_USE_FUNCTIONALITY
 #define SPIFFS_CHECK_ON_START
