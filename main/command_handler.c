@@ -54,9 +54,6 @@ void get_command_from_uart(){
 
             #endif
 
-            // initialize_get_request(satellites[0].id, satellites[0].name);
-            // initialize_get_request(satellites[1].id, satellites[1].name);
-
             command_buffer[0] = '\0';
             response_next_action();
 
@@ -80,9 +77,10 @@ void get_command_from_uart(){
             }
             #endif
 
+            // task delay for function and python. needs to be greater that timeout value
+            // of serial port opened in python script
+            vTaskDelay(pdMS_TO_TICKS(TIME_DELAY_BEFORE_RESPONSE_SENDED_MS)); 
 
-            // vTaskDelay(pdMS_TO_TICKS(15000)); // wait for not sending info about next action to package
-            vTaskDelay(pdMS_TO_TICKS(21000));
 
             command_buffer[0] = '\0';
             response_next_action();

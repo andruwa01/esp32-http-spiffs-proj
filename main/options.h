@@ -28,6 +28,12 @@
 // in skkconfig / idf.py menuconfib  
 #define NUMBER_OF_CHARS_IN_BUFFER_FOR_UART_DATA 128
 
+// task delay for function and python. needs to be greater that timeout value
+// of serial port opened in python script
+
+#define TIME_DELAY_BEFORE_RESPONSE_SENDED_MS 21000 
+
+
 typedef struct{
     char name[SPIFFS_MAX_FILE_NAME_LENGTH];
     int id;
