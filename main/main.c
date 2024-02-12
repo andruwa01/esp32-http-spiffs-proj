@@ -45,9 +45,6 @@ void app_main(void)
     initialize_wifi();
     uart_configure();
 
-    // initialize_get_request(satellites[0].id, satellites[0].name);
-    // initialize_get_request(satellites[1].id, satellites[1].name);
-
     get_command_from_uart();
 
     // button_handler();

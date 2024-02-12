@@ -13,7 +13,7 @@ const static int min_elevation = 40;
 const static char *api_key = N2YO_API_KEY;
 //===============================================//
 
-static int event_counter = 0;
+static int response_part = 0;
 
 satellite_data satellites[SPIFFS_NUMBER_OF_FILES] = {
     {.name = "norbi.txt",       .id = 46494},
@@ -38,53 +38,31 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt) {
     switch (evt->event_id)
     {
     case HTTP_EVENT_ON_DATA:
-        event_counter++;
-        // event_counter == 1 missed because we don't need this information
+        response_part++;
+        // response_part == 1 missed because we don't need this information
         // from get response
-        if(event_counter > 1){
+        if(response_part == 2){
             printf("\n");
-
             printf("Current (int)evt->data_len: %i\n", (int)evt->data_len);
-
             printf("\n");
- 
             printf("data value from get response:%.*s",(int)evt->data_len, (char*)evt->data);
-
             printf("\n");
 
-            // int sended_bytes = uart_write_bytes(UART_NUM_0, test_response_get_string, strlen(test_response_get_string));
-            // ESP_LOGW(tag_http_client, "%i bytes was sended", sended_bytes);
-
-            // uart_send_message();
-
-            // char event_data_buffer[(int)evt->data_len + 1]; 
-            // strcat(event_data_buffer, (char*)evt->data);
-            // strcat(event_data_buffer, "\n");
-
-            // int sended_bytes = uart_write_bytes(UART_NUM_0, (char*)evt->data, (int)evt->data_len);
-            // ESP_LOGW(tag_http_client, "%i bytes sent", sended_bytes);
-
-            // event_counter = 0 so next time when we push the button - we also get
-            // only data package instead of something with HTML tags
-            // also we could use (int)evt->data_len in this if, but i suppose that solution
-            // with event_counter variable is better
-            event_counter = 0;
+            response_part = 0;
 
             #if defined(SPIFFS_USE_FUNCTIONALITY)
                 json_parse_and_write_data_from_http_response_to_spiffs((char*)temp_file_path, (char*)evt->data);
-                // json_parse_and_write_data_from_http_response_to_spiffs("/spiffs/jilin-01_gaofen_2f.txt", (char*)evt->data);
             #else
                 ESP_LOGW(tag_http_client, "You don't use spiffs!");
             #endif
         }
+
         break;
     default:
         break;
     }
     return ESP_OK;
 }
-
-
 
 void initialize_get_request(int sat_id, char *file_name){
 

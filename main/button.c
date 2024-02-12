@@ -23,6 +23,14 @@ void button_callback(){
     #endif
     #endif
 
+    int gpio_level_on_start = gpio_get_level(48);
+    printf("gpio level: %i\n", gpio_level_on_start);
+
+    gpio_set_level(48, 1);
+
+    int gpio_level_on_finish = gpio_get_level(48);
+    printf("gpio level: %i\n", gpio_level_on_finish);
+
     // uart_send_message();
     // initialize_get_request();
     // initialize_get_requests_for_all_satellites();

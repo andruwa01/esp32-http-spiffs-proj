@@ -6,7 +6,8 @@
 #define SPIFFS_CHECK_ON_START
 // #define SPIFFS_LOGS
 // #define SPIFFS_READ_ALL_FILES
-#define SPIFFS_CLEAR_FILES_ON_START
+// #define SPIFFS_CLEAR_FILES_ON_START
+#define SPIFFS_CLEAR_FILES_BY_COMMAND
 // #define SIPFFS_CLEAR_FILE_AFTER_READING
 #define SPIFFS_PARSE_RESPONSE
 #define SPIFFS_MAX_FILES 15
@@ -16,7 +17,7 @@
 #define SPIFFS_BASE_PATH "/spiffs"
 #define SPIFFS_PARTITION_LABEL "data_storage"
 #define SPIFFS_FILE_PATH SPIFFS_NORBI_FILE_PATH
-#define UART_TEST
+// #define UART_TEST
 #define SEND_DATA_FROM_SPIFFS_TO_UART
 // #define PRINT_PACKAGE
 #define VORONEZH_UTC_CORRECTION
@@ -31,7 +32,7 @@
 // task delay for function and python. needs to be greater that timeout value
 // of serial port opened in python script
 
-#define TIME_DELAY_BEFORE_RESPONSE_SENDED_MS 21000 
+#define TIME_DELAY_BEFORE_RESPONSE_SENDED_MS SPIFFS_MAX_FILES * 1000 + 6000
 
 
 typedef struct{
