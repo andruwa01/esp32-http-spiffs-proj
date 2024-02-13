@@ -6,8 +6,8 @@
 
 // Standart C libraries
 #include <stdio.h>
-#include "time.h"
-#include "stdlib.h"
+#include <time.h>
+#include <stdlib.h>
 #include <dirent.h>
 #include <stdbool.h>
 

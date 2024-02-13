@@ -1,3 +1,3 @@
 #include "main.h"
 
-void initialize_nvs_flash();
+void initialize_nvs_flash(void);

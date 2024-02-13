@@ -1,3 +1,3 @@
 #include "main.h"
 
-void button_handler();
+void button_handler(void);

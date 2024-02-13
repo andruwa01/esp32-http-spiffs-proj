@@ -2,17 +2,8 @@
 
 const static char* tag_main = "main_app";
 
-// void xTaskButton(){
-//     ESP_LOGI(tag_main, "xTaskButton called");
-//     button_handler();
-//     for(;;){
-//         vTaskSuspend(NULL);
-//     }
-//     vTaskDelete(NULL);
-// }
-
 // Move it function to particular file or not think about it
-void print_satellite_data(int satellite_index){
+static void print_satellite_data(int satellite_index){
         if(esp_spiffs_mounted(SPIFFS_PARTITION_LABEL)){
             char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + strlen(satellites[satellite_index].name)];
             sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, satellites[satellite_index].name);
@@ -49,15 +40,13 @@ void app_main(void)
 
     // button_handler();
 
-    #if defined(SPIFFS_READ_ALL_FILES)
-
+    #if defined(SPIFFS_PRINT_ALL_FILES)
     for(int satellite_index = 0; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){ 
         print_satellite_data(satellite_index);
     }
     size_t total, used = 0;
     esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
     ESP_LOGW(tag_main, "total: %i, used: %i", total, used);
-
     #else
 
     ESP_LOGW(tag_main, "You don't use spiffs!");

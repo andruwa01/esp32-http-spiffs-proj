@@ -1,3 +1,3 @@
 #include "main.h"
 
-void initialize_freertos_tasks();
+void initialize_freertos_tasks(void);

@@ -10,7 +10,7 @@
 
 const static char *uart_tag = "uart"; 
 
-void uart_send_message(){
+void uart_send_message(void){
     char data_to_transmit[4000] = "message from the board over UART0\n"; 
 
     ESP_LOGW(uart_tag, "start transmitting data via uart. . .");
@@ -18,7 +18,7 @@ void uart_send_message(){
     ESP_LOGW(uart_tag, "%i bytes was sended", sended_bytes);
 }
 
-void uart_configure(){
+void uart_configure(void){
     uart_config_t uart_config = {
         .baud_rate = UART_BAUD_RATE,
         .data_bits = UART_DATA_8_BITS,

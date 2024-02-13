@@ -3,7 +3,7 @@
 static char* spiffs_tag = "spiffs_storage";
 // FILE *fp_to_end_of_default_content;
 
-void add_line_to_spiffs(char *path_to_spiffs_file, char *text_to_write){
+void add_line_to_spiffs(char* path_to_spiffs_file, char* text_to_write){
     #ifdef SPIFFS_LOGS
         ESP_LOGI(spiffs_tag, "Writing to file . . .");
     #endif
@@ -54,7 +54,7 @@ void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffe
     ESP_LOGI(spiffs_tag, "Readed %i bytes from %s file:", size_of_spiffs_data, path_to_spiffs_file);
 }
 
-void initialize_spiffs(){
+void initialize_spiffs(void){
     ESP_LOGI(spiffs_tag, "Initializing spiffs");
 
     // Configurate structure for esp_vfs_spiffs_register

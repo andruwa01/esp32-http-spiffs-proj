@@ -30,27 +30,9 @@ static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_b
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 
-    // WORKING VARIANT
-    // switch (event_id)
-    // {
-    // case WIFI_EVENT_STA_START:
-    //     printf("WiFi connecting ... \n");
-    //     break;
-    // case WIFI_EVENT_STA_CONNECTED:
-    //     printf("WiFi connected ... \n");
-    //     break;
-    // case WIFI_EVENT_STA_DISCONNECTED:
-    //     printf("WiFi lost connection ... \n");
-    //     break;
-    // case IP_EVENT_STA_GOT_IP:
-    //     printf("WiFi got IP ... \n\n");
-    //     break;
-    // default:
-    //     break;
-    // }
 }
 
-void initialize_wifi(){
+void initialize_wifi(void){
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -72,6 +54,7 @@ void initialize_wifi(){
             .ssid = CONFIG_ESP_WIFI_SSID,
             .password = CONFIG_ESP_WIFI_PASSWORD}
         };
+
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_configuration));
     ESP_ERROR_CHECK(esp_wifi_start());

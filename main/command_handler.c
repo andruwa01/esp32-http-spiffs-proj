@@ -3,7 +3,7 @@
 const static char* command_handler_tag = "command_handler";
 const static char next_action_value[16] = "NEXT_ACTION\n";
 
-static void response_next_action(){
+static void response_next_action(void){
     int data_length_chars = 0;
     data_length_chars = uart_write_bytes(UART_NUM_0, &next_action_value, strlen(next_action_value));
     ESP_LOGW(command_handler_tag, "%i bytes were sended", data_length_chars);
