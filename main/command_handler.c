@@ -99,6 +99,27 @@ void get_command_from_uart(){
 
             response_next_action();
         }
+        else if(strcmp(command_buffer, "push command files") == 0)
+        {
+            printf("%s command is realized\n ", command_buffer);
+
+            vTaskDelay(pdMS_TO_TICKS(1000));
+
+            char temp_data_buffer[64];
+
+            int data_length_chars = 0;
+            ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&data_length_chars));
+            printf("chars in Rx buffer: %i\n", data_length_chars);
+
+            data_length_chars = uart_read_bytes(UART_NUM_0, temp_data_buffer, data_length_chars, 10);
+
+            // add null terminated symbol so we could correctly read temp_data_buffer
+            temp_data_buffer[data_length_chars] = '\0';
+
+            printf("data from uart: \n%s\n", temp_data_buffer);
+
+            response_next_action();
+        }
         else
         {
             ESP_LOGW(command_handler_tag, "\nNo command was passed, new cycle");
