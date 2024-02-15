@@ -14,7 +14,7 @@ void add_line_to_spiffs(char* path_to_spiffs_file, char* text_to_write){
         ESP_LOGE(spiffs_tag, "Failed to open file for writing");
         return;
     } else {
-        fprintf(fpw, "%s", text_to_write);
+        fprintf(fpw, "%s\n", text_to_write);
         fclose(fpw);
         #ifdef SPIFFS_LOGS
             ESP_LOGI(spiffs_tag, "Text successfully writed to file %s", path_to_spiffs_file);
@@ -42,7 +42,8 @@ void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffe
     fseek(fpr, 0, SEEK_SET);
 
     if(size_of_spiffs_data > buffer_size){
-        ESP_LOGE(spiffs_tag, "ERROR! %i bytes don't fit in %i size buffer", size_of_spiffs_data, buffer_size);
+        ESP_LOGE(spiffs_tag, "ERROR! %i bytes don't fit in %i size buffer, return from function", size_of_spiffs_data, buffer_size);
+        return;
     }
 
     fread(buffer_to_save_data, sizeof(char), size_of_spiffs_data, fpr);

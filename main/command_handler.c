@@ -101,24 +101,160 @@ void get_command_from_uart(){
         }
         else if(strcmp(command_buffer, "push command files") == 0)
         {
-            printf("%s command is realized\n ", command_buffer);
+            printf("%s command is realized\n", command_buffer);
 
             vTaskDelay(pdMS_TO_TICKS(1000));
 
-            char temp_data_buffer[64];
+            #if defined(LOAD_ALL_COMMAND_FILES)
 
+
+            // iterate over commands
+            while(true){
+
+
+                int data_length_chars = 0;
+                ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&data_length_chars));
+                printf("chars in Rx buffer: %i\n", data_length_chars);
+
+
+                int data_length = data_length_chars;
+
+                char temp_data_buffer[data_length_chars];
+
+                data_length_chars = uart_read_bytes(UART_NUM_0, temp_data_buffer, data_length_chars, 10);
+
+                // add null terminated symbol so we could correctly read temp_data_buffer
+                temp_data_buffer[data_length_chars] = '\0';
+
+                if(strcmp(temp_data_buffer, "END FILES TRANSMISSION") == 0){
+                    printf("%s\n", "END FILES TRANSMISSION RAISED!");
+                    break;
+                }
+
+                // test print
+                // printf("\n%s\n", temp_data_buffer);
+
+                // clone the old buffer because when we use strtok - it changes input string
+                char temp_data_buffer_for_getting_name[strlen(temp_data_buffer)];
+                strcpy(temp_data_buffer_for_getting_name, temp_data_buffer);
+
+                // start parse data buffer (consists of data_line(s))
+                char* data_line_with_name = strtok(temp_data_buffer_for_getting_name, "\n");
+                if(data_line_with_name == NULL){
+                    ESP_LOGE(command_handler_tag, "line from imported file in empty");
+                    return;
+                } 
+
+                // get satellite name
+                char* satellite_name_line = strtok(data_line_with_name, "=");
+                char* satellite_name = strtok(NULL, satellite_name_line);
+                printf("satellite name: %s\n", satellite_name);
+
+                // create file by satellite name
+                char user_input_folder[] = "passes_user_input";
+                char file_extension[] = "txt";
+                char spiffs_satellites_user_input_path[
+                    strlen(SPIFFS_BASE_PATH) + 
+                    strlen("/") + 
+                    strlen(satellite_name) + 
+                    strlen("_commands.") + 
+                    strlen(file_extension)]; 
+
+                sprintf(spiffs_satellites_user_input_path, "%s/%s_commands.%s", SPIFFS_BASE_PATH, satellite_name, file_extension);
+
+                // first data line, to interate over it
+                char* data_line = strtok(temp_data_buffer, "\n");
+                // Parse all lines and add them to spiffs
+                while(data_line){
+                    add_line_to_spiffs(spiffs_satellites_user_input_path, data_line);
+                    // test print
+                    // printf("%s\n", data_line);
+                    data_line = strtok(NULL, "\n");
+                }
+
+                char data_buffer[data_length];
+                read_data_from_spiffs_file_to_buffer(spiffs_satellites_user_input_path, data_buffer, data_length);
+                printf("content from spiffs file with user input data:\n%s", data_buffer);
+
+                // TODO
+                clear_data_from_spiffs_file(spiffs_satellites_user_input_path);
+
+
+
+                vTaskDelay(pdMS_TO_TICKS(1000));
+            }
+
+            // send signal to python that we could read another command 
+            response_next_action();
+            #endif
+
+            #if defined(LOAD_ONE_FILE_UART)
             int data_length_chars = 0;
             ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&data_length_chars));
             printf("chars in Rx buffer: %i\n", data_length_chars);
+
+            int data_length = data_length_chars;
+
+            char temp_data_buffer[data_length_chars];
 
             data_length_chars = uart_read_bytes(UART_NUM_0, temp_data_buffer, data_length_chars, 10);
 
             // add null terminated symbol so we could correctly read temp_data_buffer
             temp_data_buffer[data_length_chars] = '\0';
 
-            printf("data from uart: \n%s\n", temp_data_buffer);
+            // test print
+            // printf("\n%s\n", temp_data_buffer);
+
+            // clone the old buffer because when we use strtok - it changes input string
+            char temp_data_buffer_for_getting_name[strlen(temp_data_buffer)];
+            strcpy(temp_data_buffer_for_getting_name, temp_data_buffer);
+
+            // start parse data buffer (consists of data_line(s))
+            char* data_line_with_name = strtok(temp_data_buffer_for_getting_name, "\n");
+            if(data_line_with_name == NULL){
+                ESP_LOGE(command_handler_tag, "line from imported file in empty");
+                return;
+            } 
+
+            // get satellite name
+            char* satellite_name_line = strtok(data_line_with_name, "=");
+            char* satellite_name = strtok(NULL, satellite_name_line);
+            printf("satellite name: %s\n", satellite_name);
+
+            // create file by satellite name
+            char user_input_folder[] = "passes_user_input";
+            char file_extension[] = "txt";
+            char spiffs_satellites_user_input_path[
+                strlen(SPIFFS_BASE_PATH) + 
+                strlen("/") + 
+                strlen(satellite_name) + 
+                strlen("_commands.") + 
+                strlen(file_extension)]; 
+
+            sprintf(spiffs_satellites_user_input_path, "%s/%s_commands.%s", SPIFFS_BASE_PATH, satellite_name, file_extension);
+
+            // first data line, to interate over it
+            char* data_line = strtok(temp_data_buffer, "\n");
+            // Parse all lines and add them to spiffs
+            while(data_line){
+                add_line_to_spiffs(spiffs_satellites_user_input_path, data_line);
+                // test print
+                // printf("%s\n", data_line);
+                data_line = strtok(NULL, "\n");
+            }
+
+            char data_buffer[data_length];
+            read_data_from_spiffs_file_to_buffer(spiffs_satellites_user_input_path, data_buffer, data_length);
+            printf("content from spiffs file with user input data:\n%s", data_buffer);
+
+            // TODO
+            clear_data_from_spiffs_file(spiffs_satellites_user_input_path);
 
             response_next_action();
+
+            #endif
+
+            
         }
         else
         {

@@ -1,6 +1,6 @@
 #include "uart.h"
 
-#define UART_BUFFER_SIZE 256
+#define UART_BUFFER_SIZE 1256
 #define UART_BAUD_RATE 115200
 
 #define UART0_TX_PIN 43

@@ -5,7 +5,7 @@ static const char time_format[] = "%d.%m.%Y %H:%M";
 
 static int pass_number = 0;
 
-void get_info_values_write_to_spiffs(char* spiffs_file_path, int sat_id, char* sat_name, int transactions_count, int passes_count){
+static void get_info_values_write_to_spiffs(char* spiffs_file_path, int sat_id, char* sat_name, int transactions_count, int passes_count){
 	char info_values[256];
 	sprintf(info_values, "sat_id: %i\nsat_name: %s\ntransactions_count: %i\npasses_count: %i\n", sat_id, sat_name, transactions_count, passes_count);
 
@@ -16,7 +16,7 @@ void get_info_values_write_to_spiffs(char* spiffs_file_path, int sat_id, char* s
 	#endif
 }
 
-void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value, char *max_az_compass_value, double max_el_value, int max_utc){
+static void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value, char *max_az_compass_value, double max_el_value, int max_utc){
 	char max_values[128];
 	char max_utc_converted[32];
 
@@ -32,7 +32,7 @@ void get_max_values_write_to_spiffs(char *spiffs_file_path, double max_az_value,
 	#endif
 }
 
-void get_az_compass_values_write_to_spiffs(char *spiffs_file_path ,char *start_az_compass_value, char *end_az_compass_value){
+static void get_az_compass_values_write_to_spiffs(char *spiffs_file_path ,char *start_az_compass_value, char *end_az_compass_value){
 	char az_compass_values[128];
 	sprintf(az_compass_values, "startAzCompass: %s\nendAzCompass: %s\n", start_az_compass_value, end_az_compass_value);
 
@@ -43,7 +43,7 @@ void get_az_compass_values_write_to_spiffs(char *spiffs_file_path ,char *start_a
 	#endif
 }
 
-void get_az_values_write_to_spiffs(char *spiffs_file_path, double start_az_value, double end_az_value){
+static void get_az_values_write_to_spiffs(char *spiffs_file_path, double start_az_value, double end_az_value){
 	char az_values[128];
 	sprintf(az_values, "startAz: %lf\nendAz: %lf\n", start_az_value, end_az_value);
 
@@ -54,7 +54,7 @@ void get_az_values_write_to_spiffs(char *spiffs_file_path, double start_az_value
 	#endif
 }
 
-void calculate_time_write_to_spiffs(int passes_counter, char *spiffs_file_path, int start_utc, int end_utc){
+static void calculate_time_write_to_spiffs(int passes_counter, char *spiffs_file_path, int start_utc, int end_utc){
 	char utc_converted_start[32];
 	char time_human_readable[128];
 	char utc_converted_end[32];
