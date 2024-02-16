@@ -4,6 +4,26 @@ const static char* command_handler_tag = "command_handler";
 const static char next_action_value[16] = "NEXT_ACTION\n";
 const static char* next_file_command = "NEXT_FILE";
 
+static void create_spiffs_command_file_path_by_name(char* sat_name, char* buffer_to_save_path){
+        // create file path by satellite name
+        char user_input_folder[] = "passes_user_input";
+        char file_extension[] = "txt";
+        char spiffs_satellites_user_input_path[
+            strlen(SPIFFS_BASE_PATH) + 
+            strlen("/") + 
+            strlen(sat_name) + 
+            strlen("_commands.") + 
+            strlen(file_extension)]; 
+
+        sprintf(spiffs_satellites_user_input_path, "%s/%s_commands.%s", SPIFFS_BASE_PATH, sat_name, file_extension);
+}
+
+static void clear_spiffs_command_file_by_name(char* sat_name){
+        char file_path_buffer[SPIFFS_MAX_FILE_NAME_LENGTH];
+        create_spiffs_command_file_path_by_name(sat_name, file_path_buffer);
+        clear_data_from_spiffs_file(file_path_buffer);
+}
+
 static void response_next_action(void){
     int data_length_chars = 0;
     data_length_chars = uart_write_bytes(UART_NUM_0, &next_action_value, strlen(next_action_value));
@@ -123,9 +143,32 @@ void get_command_from_uart(){
             // test print
             printf("temp_data_buffer: \n%s\n", temp_data_buffer);
 
-            // parse list of satellites names
+            //todo
 
-            // clear_satellite_files_by_name();
+            // parse list of satellites names (start interating over it)
+            // char* first_line_in_file = strtok(temp_data_buffer, "\n");
+
+            // test print
+            // printf("first line in file: %s\n", first_line_in_file);
+
+            // // check if broken package / first line is empty
+            // if(first_line_in_file == NULL){
+            //     ESP_LOGE(command_handler_tag, "ERROR! First line is empty! File is empty!");
+            //     return;
+            // }
+
+            // // clear first line in spiffs file (first filename)
+            // clear_spiffs_command_file_by_name(first_line_in_file);
+
+            // // next line in file (filename)
+            // char* data_line = strtok(NULL, "\n");
+
+            // // clear_satellite_files_by_name();
+            // while(data_line){
+            //     clear_spiffs_command_file_by_name(data_line);
+            //     // clear next file name line 
+            //     data_line = strtok(NULL, "\n");
+            // }
 
             #endif
 
@@ -182,7 +225,7 @@ void get_command_from_uart(){
                     char* satellite_name = strtok(NULL, satellite_name_string);
                     printf("satellite name: %s\n", satellite_name);
 
-                    // create file by satellite name
+                    // create file path by satellite name
                     char user_input_folder[] = "passes_user_input";
                     char file_extension[] = "txt";
                     char spiffs_satellites_user_input_path[
