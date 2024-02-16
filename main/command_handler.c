@@ -98,8 +98,36 @@ void get_command_from_uart(){
             ESP_LOGW(command_handler_tag, "You don't use spiffs!");
             #endif
 
-            wait_list_of_satellites();
-            clear_satellite_files_by_name();
+
+            #if defined(SPIFFS_CLEAR_COMMAND_FILES)
+            response_next_action();
+
+            // todo сделать функцию, которая будет ожидать ответа от python о том, что она готова продолжить,
+            // тогда можно будет применить её и к этой команде и к тому случаю ,когда у нас выгружаются большие объёмы данных с 
+            // python. В данном случае delay является костылём - каким он и является в случае любого большого объёма данных и костыль этот работает до тех пор, пока 
+            // данные с питона отправляются достаточно быстро, в противном случае эти данные не попадут в код строчек ниже и пройдут дальше, что будет являться ошибкой
+            // test delay
+            // give 1 sec write list to buffer
+            vTaskDelay(pdMS_TO_TICKS(1000));
+
+            // wait_list_of_satellites();
+            int data_length_chars = 0;
+            ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&data_length_chars));
+            printf("chars in Rx buffer: %i\n", data_length_chars);
+            int data_length = data_length_chars;
+            char temp_data_buffer[data_length_chars];
+            data_length_chars = uart_read_bytes(UART_NUM_0, temp_data_buffer, data_length_chars, 10);
+            // add null terminated symbol so we could correctly read temp_data_buffer
+            temp_data_buffer[data_length_chars] = '\0';
+
+            // test print
+            printf("temp_data_buffer: \n%s\n", temp_data_buffer);
+
+            // parse list of satellites names
+
+            // clear_satellite_files_by_name();
+
+            #endif
 
             response_next_action();
         }
@@ -121,13 +149,9 @@ void get_command_from_uart(){
                 int data_length_chars = 0;
                 ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&data_length_chars));
                 printf("chars in Rx buffer: %i\n", data_length_chars);
-
                 int data_length = data_length_chars;
-
                 char temp_data_buffer[data_length_chars];
-
                 data_length_chars = uart_read_bytes(UART_NUM_0, temp_data_buffer, data_length_chars, 10);
-
                 // add null terminated symbol so we could correctly read temp_data_buffer
                 temp_data_buffer[data_length_chars] = '\0';
 
@@ -212,6 +236,8 @@ void get_command_from_uart(){
         {
             ESP_LOGW(command_handler_tag, "\nNo command was passed, new cycle");
         }
+
+        // wait 1 sec to avoid while loop looping too fast
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
