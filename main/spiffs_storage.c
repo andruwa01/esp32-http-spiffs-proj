@@ -17,7 +17,7 @@ void add_line_to_spiffs(char* path_to_spiffs_file, char* text_to_write){
         fprintf(fpw, "%s\n", text_to_write);
         fclose(fpw);
         #ifdef SPIFFS_LOGS
-            ESP_LOGI(spiffs_tag, "Text successfully writed to file %s", path_to_spiffs_file);
+            ESP_LOGI(spiffs_tag, "Line successfully writed to file %s", path_to_spiffs_file);
         #endif
     }
 }
