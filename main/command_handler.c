@@ -3,6 +3,9 @@
 const static char* command_handler_tag = "command_handler";
 const static char next_action_value[16] = "NEXT_ACTION\n";
 const static char* next_file_command = "NEXT_FILE";
+const static char* text_file_extension = ".txt"; 
+const static char* name_postfix_command = "_command";
+const static char* name_postfix_pass = "_passes";
 
 static void wait_response_from_pc(void){
     char response_correct_value[] = "RESPONSE FROM PC";
@@ -29,16 +32,18 @@ static void wait_response_from_pc(void){
     uart_flush(UART_NUM_0);
 }
 
-static void create_spiffs_command_file_path_by_name(char* sat_name, char* buffer_to_save_path){
+static void create_spiffs_file_path_by_params(char* sat_name, char* name_postfix, char* buffer_to_save_path){
         // create file path by satellite name
-        char user_input_folder[] = "passes_user_input";
+        // char user_input_folder[] = "passes_user_input";
         char spiffs_satellites_user_input_path[
             strlen(SPIFFS_BASE_PATH) + 
             strlen("/") + 
-            strlen(sat_name) 
+            strlen(sat_name) +
+            strlen(name_postfix) +
+            strlen(text_file_extension)
             ];
 
-        sprintf(spiffs_satellites_user_input_path, "%s/%s", SPIFFS_BASE_PATH, sat_name);
+        sprintf(spiffs_satellites_user_input_path, "%s/%s%s%s", SPIFFS_BASE_PATH, sat_name, name_postfix, text_file_extension);
 
         stpcpy(buffer_to_save_path, spiffs_satellites_user_input_path);
 
@@ -46,9 +51,9 @@ static void create_spiffs_command_file_path_by_name(char* sat_name, char* buffer
         // printf("command file path: %s\n", buffer_to_save_path);
 }
 
-static void clear_spiffs_command_file_by_name(char* sat_name){
+static void clear_spiffs_file_by_params(char* sat_name, char* name_postfix){
         char file_path_buffer[SPIFFS_MAX_FILE_NAME_LENGTH];
-        create_spiffs_command_file_path_by_name(sat_name, file_path_buffer);
+        create_spiffs_file_path_by_params(sat_name, name_postfix, file_path_buffer);
         clear_data_from_spiffs_file(file_path_buffer);
 }
 
@@ -190,14 +195,14 @@ void get_command_from_uart(){
             }
 
             // clear first line in spiffs file (first filename)
-            clear_spiffs_command_file_by_name(first_line_in_file);
+            clear_spiffs_file_by_params(first_line_in_file, name_postfix_pass);
 
             // next line in file (filename)
             char* data_line = strtok(NULL, "\n");
 
             // clear_satellite_files_by_name();
             while(data_line){
-                clear_spiffs_command_file_by_name(data_line);
+                clear_spiffs_file_by_params(data_line, name_postfix_pass);
                 // clear next file name line 
                 data_line = strtok(NULL, "\n");
             }
@@ -263,15 +268,19 @@ void get_command_from_uart(){
 
                     // create file path by satellite name
                     char user_input_folder[] = "passes_user_input";
-                    char file_extension[] = "txt";
-                    char spiffs_satellites_user_input_path[
-                        strlen(SPIFFS_BASE_PATH) + 
-                        strlen("/") + 
-                        strlen(satellite_name) + 
-                        strlen("_commands.") + 
-                        strlen(file_extension)]; 
+                    // char name_postfix[] = "_commands";
+                    // char file_extension[] = "txt";
+                    // char spiffs_satellites_user_input_path[
+                    //     strlen(SPIFFS_BASE_PATH) + 
+                    //     strlen("/") + 
+                    //     strlen(satellite_name) + 
+                    //     strlen("_commands.") + 
+                    //     strlen(text_file_extension)]; 
 
-                    sprintf(spiffs_satellites_user_input_path, "%s/%s_commands.%s", SPIFFS_BASE_PATH, satellite_name, file_extension);
+                    char spiffs_satellites_user_input_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+                    create_spiffs_file_path_by_params(satellite_name, name_postfix_command, spiffs_satellites_user_input_path);
+
+                    // sprintf(spiffs_satellites_user_input_path, "%s/%s_commands.%s", SPIFFS_BASE_PATH, satellite_name, text_file_extension);
 
                     // first data line is start file line so we need to skip it
                     char* first_line_in_file = strtok(temp_data_buffer, "\n");
@@ -374,35 +383,40 @@ void get_command_from_uart(){
             // printf("\n%s\n", temp_data_buffer);
 
             // clone the old buffer because when we use strtok - it changes input string
-            // char temp_data_buffer_for_getting_name[strlen(temp_data_buffer)];
-            // strcpy(temp_data_buffer_for_getting_name, temp_data_buffer);
+            char temp_data_buffer_for_getting_name[strlen(temp_data_buffer)];
+            strcpy(temp_data_buffer_for_getting_name, temp_data_buffer);
 
             // start parse data buffer (consists of data_line(s))
-            char* first_line_in_file = strtok(temp_data_buffer, "\n");
+            char* first_line_in_file = strtok(temp_data_buffer_for_getting_name, "\n");
 
             if(strcmp(first_line_in_file, "START_FILE") == 0){
 
-                // char* data_line_with_name = strtok(NULL, "\n");
+                char* data_line_with_name = strtok(NULL, "\n");
 
-                // // get satellite name
-                // char* satellite_name_string = strtok(data_line_with_name, "=");
-                // char* satellite_name = strtok(NULL, satellite_name_string);
+                // get satellite name (WARNING! separator is ": ", which is not equal to separator in case of command file)
+                char* satellite_name_string = strtok(data_line_with_name, ":");
+                char* satellite_name = strtok(NULL, satellite_name_string);
                 // printf("satellite name: %s\n", satellite_name);
 
-                // // create file path by satellite name
-                // char user_input_folder[] = "passes_user_input";
+                // create file path by satellite name
+                char user_input_folder[] = "passes_user_input";
                 // char file_extension[] = "txt";
+                // char name_postfix[] = "_passes";
+                // char name_postfix[] = "_commands";
                 // char spiffs_satellites_user_input_path[
                 //     strlen(SPIFFS_BASE_PATH) + 
                 //     strlen("/") + 
                 //     strlen(satellite_name) + 
-                //     strlen("_commands.") + 
-                //     strlen(file_extension)]; 
+                //     strlen(name_postfix) + 
+                //     strlen(text_file_extension)]; 
 
-                // sprintf(spiffs_satellites_user_input_path, "%s/%s_commands.%s", SPIFFS_BASE_PATH, satellite_name, file_extension);
+                char spiffs_passes_file_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+                create_spiffs_file_path_by_params(satellite_name, name_postfix_pass, spiffs_passes_file_path);
+
+                // sprintf(spiffs_passes_file_path, "%s/%s%s.%s", SPIFFS_BASE_PATH, satellite_name, name_postfix_pass, text_file_extension);
 
                 // first data line is start file line so we need to skip it
-                // char* first_line_in_file = strtok(temp_data_buffer, "\n");
+                char* first_line_in_file = strtok(temp_data_buffer, "\n");
 
                 // first data line, to interate over it
                 char* data_line = strtok(NULL, "\n");
@@ -414,16 +428,17 @@ void get_command_from_uart(){
                         break;
                     }
 
-                    // add_line_to_spiffs(spiffs_satellites_user_input_path, data_line);
+                    add_line_to_spiffs(spiffs_passes_file_path, data_line);
 
                     // test print
-                    printf("%s\n", data_line);
+                    // printf("%s\n", data_line);
                     data_line = strtok(NULL, "\n");
                 }
 
-                // char data_buffer[data_length];
-                // read_data_from_spiffs_file_to_buffer(spiffs_satellites_user_input_path, data_buffer, data_length);
-                // printf("content from spiffs file with user input data:\n%s", data_buffer);
+                // test print content of just created spiffs file
+                char data_buffer[data_length];
+                read_data_from_spiffs_file_to_buffer(spiffs_passes_file_path, data_buffer, data_length);
+                printf("content from spiffs file with user input data:\n%s", data_buffer);
 
                 // clear data in spiffs (this command could be realize in another block of code)
                 // clear_data_from_spiffs_file(spiffs_satellites_user_input_path);
@@ -439,8 +454,6 @@ void get_command_from_uart(){
         // send signal to python that we could read another command 
         response_next_action();
         #endif
-
-            
         }
         else
         {

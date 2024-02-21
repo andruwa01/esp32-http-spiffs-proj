@@ -32,8 +32,8 @@ void app_main(void)
     }
 
     initialize_spiffs();
-    initialize_nvs_flash();
-    initialize_wifi();
+    // initialize_nvs_flash();
+    // initialize_wifi();
     uart_configure();
 
     get_command_from_uart();

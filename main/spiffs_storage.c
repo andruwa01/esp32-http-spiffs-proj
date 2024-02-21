@@ -33,7 +33,7 @@ void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffe
     FILE* fpr = fopen(path_to_spiffs_file, "r"); 
 
     if(fpr == NULL){
-        ESP_LOGE(spiffs_tag, "Failed to open file for reading");
+        ESP_LOGE(spiffs_tag, "Failed to open file %s for reading", path_to_spiffs_file);
         return;
     }
 
