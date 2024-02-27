@@ -385,7 +385,11 @@ void get_command_from_uart(){
             response_next_action();
             #endif
         }
+
+
         else if(strcmp(command_buffer, "get spiffs info") == 0)
+
+
         {
             printf("%s command is realized\n", command_buffer);
 
@@ -407,75 +411,85 @@ void get_command_from_uart(){
 
             response_next_action();
         }
+
+
         else if(strcmp(command_buffer, "load passes to spiffs") == 0)
+
+
         {
+            printf("%s command is realized\n", command_buffer);
 
-        printf("%s command is realized\n", command_buffer);
-
-        // send signal to python that we got command
-        response_next_action();
-
-        // iterate over command files
-        while(true){
-            // give 1 sec to avoid bug when while(true) works too fast and couses problems
-            vTaskDelay(pdMS_TO_TICKS(1000));
-
-            char pass_buffer[PASS_DATA_SIZE];
-            get_data_from_uart(pass_buffer, PASS_DATA_SIZE);
-
-            // remember this value for print data from spiffs in the end for the test
-            size_t data_length = strlen(pass_buffer);
-
-            if(strcmp(pass_buffer, "END FILES TRANSMISSION") == 0){
-                printf("%s\n", "END FILES TRANSMISSION RAISED!");
-                // so stop iterate over command files and send info about this in python 
-                response_next_action();
-                break;
-            }
-
-            // clone the old buffer because when we use strtok - it changes input string
-            char temp_data_buffer_for_getting_name[strlen(pass_buffer)];
-            strcpy(temp_data_buffer_for_getting_name, pass_buffer);
-            // start parse data buffer (consists of data_line(s))
-            char* first_line_in_file = strtok(temp_data_buffer_for_getting_name, "\n");
-
-            if(strcmp(first_line_in_file, "START_FILE") == 0){
-                char* data_line_with_name = strtok(NULL, "\n");
-                // get satellite name (WARNING! separator is ": ", which is not equal to separator in case of command file)
-                char* satellite_id_string = strtok(data_line_with_name, ":");
-                char* satellite_id = strtok(NULL, satellite_id_string);
-                char spiffs_passes_file_path[SPIFFS_MAX_FILE_NAME_LENGTH];
-                create_spiffs_txt_file_path_by_params(satellite_id, name_postfix_pass, spiffs_passes_file_path);
-                // first data line is start file line so we need to skip it
-                char* first_line_in_file = strtok(pass_buffer, "\n");
-                // first data line, to interate over it
-                char* data_line = strtok(NULL, "\n");
-                // Parse all lines and add them to spiffs
-                while(data_line){
-                    if(strcmp(data_line, "END_FILE") == 0){
-                        // so we need to break loop of current file reading (to not add this line to spiffs) 
-                        break;
-                    }
-                    add_line_to_spiffs(spiffs_passes_file_path, data_line);
-                    // test print
-                    // printf("%s\n", data_line);
-                    data_line = strtok(NULL, "\n");
-                }
-                // test print content of just created spiffs file
-                // char data_buffer[data_length];
-                // read_data_from_spiffs_file_to_buffer(spiffs_passes_file_path, data_buffer, data_length);
-                // printf("content from spiffs file with user input data:\n%s", data_buffer);
-
-                // clean data about file from uart to free space for other file
-                uart_flush(UART_NUM_0);
-            }
-
-            // signal to python that we could read another file
+            // send signal to python that we got command
             response_next_action();
-        }
 
-        // send signal to python that we could read another command 
-        response_next_action();
+            // iterate over command files
+            while(true){
+                // give 1 sec to avoid bug when while(true) works too fast and couses problems
+                vTaskDelay(pdMS_TO_TICKS(1000));
+
+                char pass_buffer[PASS_DATA_SIZE];
+                get_data_from_uart(pass_buffer, PASS_DATA_SIZE);
+
+                // remember this value for print data from spiffs in the end for the test
+                size_t data_length = strlen(pass_buffer);
+
+                if(strcmp(pass_buffer, "END FILES TRANSMISSION") == 0){
+                    printf("%s\n", "END FILES TRANSMISSION RAISED!");
+                    // so stop iterate over command files and send info about this in python 
+                    response_next_action();
+                    break;
+                }
+
+                // clone the old buffer because when we use strtok - it changes input string
+                char temp_data_buffer_for_getting_name[strlen(pass_buffer)];
+                strcpy(temp_data_buffer_for_getting_name, pass_buffer);
+
+                const char line_delimiter[] = "\n";
+                const char element_delimiter[] = ": "; 
+
+                char* line_saveptr = NULL;
+                char* element_saveptr = NULL;
+
+                // start parse data buffer (consists of data_line(s))
+                char* first_line_in_file = strtok_r(temp_data_buffer_for_getting_name, line_delimiter, &line_saveptr);
+
+                if(strcmp(first_line_in_file, "START_FILE") == 0){
+                    char* data_line_with_id = strtok_r(NULL, line_delimiter, &line_saveptr);
+                    // get satellite name (WARNING! separator is ": ", which is not equal to separator in case of command file)
+                    // skip "sat_id" part (left from delimiter)
+                    strtok_r(data_line_with_id, element_delimiter, &element_saveptr);
+                    char* satellite_id = strtok_r(NULL, element_delimiter, &element_saveptr);
+                    char spiffs_passes_file_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+                    create_spiffs_txt_file_path_by_params(satellite_id, name_postfix_pass, spiffs_passes_file_path);
+                    // first data line is start file line so we need to skip it
+                    char* first_line_in_file = strtok(pass_buffer, "\n");
+                    // first data line, to interate over it
+                    char* data_line = strtok(NULL, "\n");
+                    // Parse all lines and add them to spiffs
+                    while(data_line){
+                        if(strcmp(data_line, "END_FILE") == 0){
+                            // so we need to break loop of current file reading (to not add this line to spiffs) 
+                            break;
+                        }
+                        add_line_to_spiffs(spiffs_passes_file_path, data_line);
+                        // test print
+                        // printf("%s\n", data_line);
+                        data_line = strtok(NULL, "\n");
+                    }
+                    // test print content of just created spiffs file
+                    char data_buffer[data_length];
+                    read_data_from_spiffs_file_to_buffer(spiffs_passes_file_path, data_buffer, data_length);
+                    printf("content from spiffs file with user input data:\n%s", data_buffer);
+
+                    // clean data about file from uart to free space for other file
+                    uart_flush(UART_NUM_0);
+                }
+
+                // signal to python that we could read another file
+                response_next_action();
+            }
+
+            // we don't need here response_next_action(); because last response will be in while cycle 
         }
         else
         {
