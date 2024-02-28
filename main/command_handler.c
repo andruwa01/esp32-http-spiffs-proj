@@ -120,7 +120,7 @@ void get_command_from_uart(){
         else if(strcmp(command_buffer, "update buffer") == 0)
         {
             // we got command
-            response_next_action();
+            response_next_action(); 
 
             // give some time to python script for writing options file to uart (esle we got runtime exception)
             wait_until_next_action_in_python_ms(1000);
@@ -221,11 +221,20 @@ void get_command_from_uart(){
                 char pass_buffer[PASS_DATA_SIZE];
                 read_data_from_spiffs_file_to_buffer(spiffs_path, pass_buffer, PASS_DATA_SIZE);
                 strcat(pass_buffer, "END_OF_THE_FILE\n");
-                // printf("%s\n", pass_buffer);
+
+                // //test
+                // create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_path);
+                // char command_buffer[COMMAND_DATA_SIZE];
+                // read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, COMMAND_DATA_SIZE);
+                // strcat(command_buffer, "END_OF_THE_FILE\n");
 
                 // send sat data to uart to python script get it
-                int sended_bytes = uart_write_bytes(UART_NUM_0, (const char*)&pass_buffer, strlen(pass_buffer));
-                ESP_LOGW(command_handler_tag, "%i bytes were sended", sended_bytes);
+                int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&pass_buffer, strlen(pass_buffer));
+                ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
+
+                // // test
+                // int command_bytes = uart_write_bytes(UART_NUM_0, (const char*)&command_buffer, strlen(command_buffer));
+                // ESP_LOGW(command_handler_tag, "%i bytes were sended", command_bytes);
 
                 // test print
                 // printf("sat_name: %s\n", sat_name);
@@ -430,6 +439,9 @@ void get_command_from_uart(){
                 char pass_buffer[PASS_DATA_SIZE];
                 get_data_from_uart(pass_buffer, PASS_DATA_SIZE);
 
+                // test print
+                ESP_LOGI(command_handler_tag, "\n%s", pass_buffer);
+
                 // remember this value for print data from spiffs in the end for the test
                 size_t data_length = strlen(pass_buffer);
 
@@ -445,22 +457,65 @@ void get_command_from_uart(){
                 strcpy(temp_data_buffer_for_getting_name, pass_buffer);
 
                 const char line_delimiter[] = "\n";
-                const char element_delimiter[] = ": "; 
+                const char req_data_delimiter[] = ": "; 
+                const char param_data_delimiter[] = "=";
 
                 char* line_saveptr = NULL;
                 char* element_saveptr = NULL;
 
                 // start parse data buffer (consists of data_line(s))
                 char* first_line_in_file = strtok_r(temp_data_buffer_for_getting_name, line_delimiter, &line_saveptr);
-
                 if(strcmp(first_line_in_file, "START_FILE") == 0){
                     char* data_line_with_id = strtok_r(NULL, line_delimiter, &line_saveptr);
-                    // get satellite name (WARNING! separator is ": ", which is not equal to separator in case of command file)
+
+                    // // test
+                    char old_line_with_id[strlen(data_line_with_id)];
+                    strcpy(old_line_with_id, data_line_with_id);
+
+                    // test
+                    char current_delimiter[strlen(req_data_delimiter) + 1];
+                    strcpy(current_delimiter, req_data_delimiter);
+
+                    // test print
+                    // printf("%s\n", current_delimiter);
+
+                    // test
+                    char name_postfix[strlen(name_postfix_command) + 1];
+                    char* test_ptr = strtok_r(data_line_with_id, current_delimiter, &element_saveptr);
+
+                    // test print
+                    ESP_LOGW(command_handler_tag, "test ptr: %s\n", test_ptr);
+
+                    // if it is no pass
+                    if(strcmp(test_ptr, old_line_with_id) == 0){
+                        // change delimiter to param
+                        strcpy(current_delimiter, param_data_delimiter);
+                        // skip element left from =
+                        char* left_element = strtok_r(test_ptr, current_delimiter, &element_saveptr);
+                        // ERROR !
+                        // test print
+                        printf("left element: %s\n", left_element);
+                        // change file postfix to param postfix
+                        strcpy(name_postfix, name_postfix_command);
+
+                        printf("current postfix: %s\n", name_postfix);
+                    } else {
+                        // change file postfix to pass postfix
+                        strcpy(name_postfix, name_postfix_pass);
+
+                        printf("current postfix: %s\n", name_postfix);
+                    }
+                    printf("current delimiter: %s\n", current_delimiter);
+                    char* satellite_id = strtok_r(NULL, current_delimiter, &element_saveptr); 
+
                     // skip "sat_id" part (left from delimiter)
-                    strtok_r(data_line_with_id, element_delimiter, &element_saveptr);
-                    char* satellite_id = strtok_r(NULL, element_delimiter, &element_saveptr);
+                    // char* element_ptr = strtok_r(data_line_with_id, req_data_delimiter, &element_saveptr);
+
+                    // char* satellite_id = strtok_r(NULL, req_data_delimiter, &element_saveptr);
                     char spiffs_passes_file_path[SPIFFS_MAX_FILE_NAME_LENGTH];
-                    create_spiffs_txt_file_path_by_params(satellite_id, name_postfix_pass, spiffs_passes_file_path);
+                    // create_spiffs_txt_file_path_by_params(satellite_id, name_postfix_pass, spiffs_passes_file_path);
+                    // test
+                    create_spiffs_txt_file_path_by_params(satellite_id, name_postfix, spiffs_passes_file_path);
                     // first data line is start file line so we need to skip it
                     char* first_line_in_file = strtok(pass_buffer, "\n");
                     // first data line, to interate over it
@@ -480,6 +535,9 @@ void get_command_from_uart(){
                     char data_buffer[data_length];
                     read_data_from_spiffs_file_to_buffer(spiffs_passes_file_path, data_buffer, data_length);
                     printf("content from spiffs file with user input data:\n%s", data_buffer);
+
+                    // test
+                    clear_data_from_spiffs_file(spiffs_passes_file_path);
 
                     // clean data about file from uart to free space for other file
                     uart_flush(UART_NUM_0);
