@@ -34,7 +34,7 @@ const static size_t command_size = 128;
 //     uart_flush(UART_NUM_0);
 // }
 
-static void wait_until_next_action_in_python_ms(int ms_to_wait){
+static void wait_until_python_process(int ms_to_wait){
     vTaskDelay(pdMS_TO_TICKS(ms_to_wait));
 }
 
@@ -84,7 +84,7 @@ static void clear_spiffs_file_by_params(char* file_name, const char* name_postfi
 }
 
 static void response_next_action(void){
-    wait_until_next_action_in_python_ms(1000);
+    wait_until_python_process(1000);
 
     uart_flush(UART_NUM_0);
 
@@ -123,7 +123,7 @@ void get_command_from_uart(){
             response_next_action(); 
 
             // give some time to python script for writing options file to uart (esle we got runtime exception)
-            wait_until_next_action_in_python_ms(1000);
+            wait_until_python_process(1000);
 
             #if defined(SEND_DATA_FROM_SPIFFS_TO_UART)
             for(int file_index = 0; file_index < SPIFFS_NUMBER_OF_FILES; file_index++){
@@ -152,13 +152,15 @@ void get_command_from_uart(){
 
             while(true){
                 // test delay wait time for python script
-                wait_until_next_action_in_python_ms(1000);
+                wait_until_python_process(1000);
 
                 int size_of_buffer = 256;
                 char temp_data_buffer[size_of_buffer];
                 get_data_from_uart(temp_data_buffer, size_of_buffer);
-                // got data 
-                response_next_action();
+                
+                // TODO delete
+                // got data from python
+                // response_next_action();
 
                 if(strcmp(temp_data_buffer, "END FILES TRANSMISSION") == 0){
                     printf("%s\n", "END FILES TRANSMISSION RAISED!");
@@ -186,6 +188,10 @@ void get_command_from_uart(){
                     // Parse all lines and add them to spiffs
                     while(data_line){
                         if(strcmp(data_line, "END_FILE") == 0){
+                            // test
+                            // read data from python finished
+                            response_next_action();
+
                             // so we need to break loop of current file reading (to not add this line to spiffs) 
                             break;
                         }
@@ -215,37 +221,42 @@ void get_command_from_uart(){
                 // skip sat_name and get to sat_id
                 strtok_r(data_line, "=", &sat_saveptr);
                 char* sat_id = strtok_r(NULL, "=", &sat_saveptr);
+
                 // create file spiffs path for sat_name
                 char spiffs_path[SPIFFS_MAX_FILE_NAME_LENGTH];
-                create_spiffs_txt_file_path_by_params(sat_id, name_postfix_pass, spiffs_path);
-                char pass_buffer[PASS_DATA_SIZE];
-                read_data_from_spiffs_file_to_buffer(spiffs_path, pass_buffer, PASS_DATA_SIZE);
-                strcat(pass_buffer, "END_OF_THE_FILE\n");
+                // create_spiffs_txt_file_path_by_params(sat_id, name_postfix_pass, spiffs_path);
+                // char pass_buffer[PASS_DATA_SIZE];
+                // read_data_from_spiffs_file_to_buffer(spiffs_path, pass_buffer, PASS_DATA_SIZE);
+                // strcat(pass_buffer, "END_OF_THE_FILE\n");
 
-                // //test
-                // create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_path);
-                // char command_buffer[COMMAND_DATA_SIZE];
-                // read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, COMMAND_DATA_SIZE);
-                // strcat(command_buffer, "END_OF_THE_FILE\n");
+                //test
+                create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_path);
+                char command_buffer[COMMAND_DATA_SIZE];
+                read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, COMMAND_DATA_SIZE);
+                strcat(command_buffer, "END_OF_THE_FILE\n");
 
                 // send sat data to uart to python script get it
-                int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&pass_buffer, strlen(pass_buffer));
-                ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
+                // int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&pass_buffer, strlen(pass_buffer));
+                // ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
 
-                // // test
-                // int command_bytes = uart_write_bytes(UART_NUM_0, (const char*)&command_buffer, strlen(command_buffer));
-                // ESP_LOGW(command_handler_tag, "%i bytes were sended", command_bytes);
+                // test
+                int command_bytes = uart_write_bytes(UART_NUM_0, (const char*)&command_buffer, strlen(command_buffer));
+                ESP_LOGW(command_handler_tag, "%i bytes were sended", command_bytes);
 
                 // test print
                 // printf("sat_name: %s\n", sat_name);
                 data_line = strtok_r(NULL, "\n", &data_line_saveptr);
             }
-            // finish interating over file
-            response_next_action();
+            // TODO delete
+            // finish writing file
+            // response_next_action();
 
+            // clear command file on finish
             clear_data_from_spiffs_file(spiffs_satellites_user_input_path);
 
-            wait_until_next_action_in_python_ms(TIME_DELAY_BEFORE_RESPONSE_SENDED_MS);
+            wait_until_python_process(TIME_DELAY_BEFORE_RESPONSE_SENDED_MS);
+            // response_next_action();
+
             response_next_action();
         }
         else if(strcmp(command_buffer, "clear spiffs") == 0)
@@ -296,6 +307,7 @@ void get_command_from_uart(){
 
             // clear first line in spiffs file (first filename)
             clear_spiffs_file_by_params(first_line_in_file, name_postfix_pass);
+            clear_spiffs_file_by_params(first_line_in_file, name_postfix_command);
 
             // next line in file (filename)
             char* data_line = strtok(NULL, "\n");
@@ -303,6 +315,7 @@ void get_command_from_uart(){
             // clear_satellite_files_by_name();
             while(data_line){
                 clear_spiffs_file_by_params(data_line, name_postfix_pass);
+                clear_spiffs_file_by_params(data_line, name_postfix_command);
                 // clear next file name line 
                 data_line = strtok(NULL, "\n");
             }
@@ -537,7 +550,7 @@ void get_command_from_uart(){
                     printf("content from spiffs file with user input data:\n%s", data_buffer);
 
                     // test
-                    clear_data_from_spiffs_file(spiffs_passes_file_path);
+                    // clear_data_from_spiffs_file(spiffs_passes_file_path);
 
                     // clean data about file from uart to free space for other file
                     uart_flush(UART_NUM_0);
