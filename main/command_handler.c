@@ -95,7 +95,7 @@ static void response_next_action(void){
     uart_flush(UART_NUM_0);
 }
 
-void get_command_from_uart(){
+void init_command_handler(){
     if(!uart_is_driver_installed(UART_NUM_0)){
         ESP_LOGE(command_handler_tag, "ERROR! uart driver is not installed");
         return;
@@ -224,10 +224,10 @@ void get_command_from_uart(){
 
                 // create file spiffs path for sat_name
                 char spiffs_path[SPIFFS_MAX_FILE_NAME_LENGTH];
-                // create_spiffs_txt_file_path_by_params(sat_id, name_postfix_pass, spiffs_path);
-                // char pass_buffer[PASS_DATA_SIZE];
-                // read_data_from_spiffs_file_to_buffer(spiffs_path, pass_buffer, PASS_DATA_SIZE);
-                // strcat(pass_buffer, "END_OF_THE_FILE\n");
+                create_spiffs_txt_file_path_by_params(sat_id, name_postfix_pass, spiffs_path);
+                char pass_buffer[PASS_DATA_SIZE];
+                read_data_from_spiffs_file_to_buffer(spiffs_path, pass_buffer, PASS_DATA_SIZE);
+                strcat(pass_buffer, "END_OF_THE_FILE\n");
 
                 //test
                 create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_path);
@@ -236,8 +236,8 @@ void get_command_from_uart(){
                 strcat(command_buffer, "END_OF_THE_FILE\n");
 
                 // send sat data to uart to python script get it
-                // int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&pass_buffer, strlen(pass_buffer));
-                // ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
+                int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&pass_buffer, strlen(pass_buffer));
+                ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
 
                 // test
                 int command_bytes = uart_write_bytes(UART_NUM_0, (const char*)&command_buffer, strlen(command_buffer));

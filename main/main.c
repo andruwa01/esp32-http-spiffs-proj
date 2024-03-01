@@ -36,7 +36,7 @@ void app_main(void)
     // initialize_wifi();
     uart_configure();
 
-    get_command_from_uart();
+    init_command_handler();
 
     // button_handler();
 

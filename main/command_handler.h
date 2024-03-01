@@ -1,3 +1,3 @@
 #include "main.h"
 
-void get_command_from_uart(void);
+void init_command_handler(void);
