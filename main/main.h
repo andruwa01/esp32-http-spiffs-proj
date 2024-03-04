@@ -10,19 +10,20 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include <dirent.h>
 
 // Source headers
 #include "spiffs_storage.h"
-#include "nvs.h"
-#include "wifi.h"
-#include "http_client.h"
+// #include "nvs.h"
+// #include "wifi.h"
+// #include "http_client.h"
 #include "api_key.h" // key for request (to exclude from git)
-#include <cJSON.h>
+// #include <cJSON.h>
 #include "uart.h"
-#include "button.h"
-#include "freertos_handler.h"
+// #include "button.h"
+// #include "freertos_handler.h"
 #include "satellite_data_parser.h"
-#include "time_converter.h"
+// #include "time_converter.h"
 #include "command_handler.h"
 
 // ESP-IDF headers

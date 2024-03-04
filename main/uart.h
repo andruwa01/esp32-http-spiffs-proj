@@ -1,4 +1,4 @@
 #include "main.h"
 
-void uart_configure(void);
+void init_uart(void);
 void uart_send_message(void);

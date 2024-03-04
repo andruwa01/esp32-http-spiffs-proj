@@ -4,17 +4,24 @@ idf_component_register(
     # INCLUDE_DIRS "." 
 
     # New compile configuration
-    SRCS "command_handler.c"
-         "main.c" 
-         "spiffs_storage.c" 
-         "nvs.c" "wifi.c" 
-         "http_client.c" 
-         "button.c" 
-         "freertos_handler.c" 
-         "uart.c" 
-         "satellite_data_parser.c" 
-         "time_converter.c"
+    # SRCS "command_handler.c"
+    #      "main.c" 
+    #      "spiffs_storage.c" 
+    #      "nvs.c" "wifi.c" 
+    #      "http_client.c" 
+    #      "button.c" 
+    #      "freertos_handler.c" 
+    #      "uart.c" 
+    #      "satellite_data_parser.c" 
+    #      "time_converter.c"
+    #      "command_handler.c"
+    # INCLUDE_DIRS "."
+
+    # Final configuration without networking handling in board 
+    SRCS "main.c"
          "command_handler.c"
+         "spiffs_storage.c"
+         "uart.c"
     INCLUDE_DIRS "."
 
     # Test compile configuration

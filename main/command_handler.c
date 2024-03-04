@@ -107,17 +107,17 @@ void init_command_handler(){
         char command_buffer[command_size];
         get_data_from_uart(command_buffer, command_size);
 
-        if(strcmp(command_buffer, "get all") == 0)
-        {
-            #if defined(GET_REQUEST_ALL_SAT)
-            initialize_get_requests_for_all_satellites();
+        // if(strcmp(command_buffer, "get all") == 0)
+        // {
+        //     #if defined(GET_REQUEST_ALL_SAT)
+        //     initialize_get_requests_for_all_satellites();
 
-            printf("current command (after clearence): %s\n", command_buffer);
-            #endif
+        //     printf("current command (after clearence): %s\n", command_buffer);
+        //     #endif
 
-            response_next_action();
-        }
-        else if(strcmp(command_buffer, "update buffer") == 0)
+        //     response_next_action();
+        // }
+        if(strcmp(command_buffer, "give spiffs data to pc") == 0)
         {
             // we got command
             response_next_action(); 
@@ -259,7 +259,23 @@ void init_command_handler(){
 
             response_next_action();
         }
-        else if(strcmp(command_buffer, "clear spiffs") == 0)
+
+        else if(strcmp(command_buffer, "clean all") == 0){
+            DIR *dptr;
+            struct dirent *dir;
+            dptr = opendir(SPIFFS_BASE_PATH);
+            if(dptr){
+                while((dir = readdir(dptr)) != NULL){
+                    char file_path[SPIFFS_MAX_FILE_NAME_LENGTH + strlen("/") + strlen(dir->d_name)];
+                    sprintf(file_path, "%s/%s", SPIFFS_BASE_PATH, dir->d_name);
+                    clear_data_from_spiffs_file(file_path);
+                }
+                closedir(dptr);
+            }
+
+            response_next_action();
+        }
+        else if(strcmp(command_buffer, "clean spiffs") == 0)
         {
             #if defined(SPIFFS_CLEAN_FULL_PASSES_FILES)
             for(int satellite_index = 0; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){
@@ -277,7 +293,8 @@ void init_command_handler(){
             ESP_LOGW(command_handler_tag, "You don't use spiffs!");
             #endif
 
-            #if defined(SPIFFS_CLEAR_COMMAND_FILES)
+            #if defined(SPIFFS_CLEAR_FILES)
+
             response_next_action();
 
             // todo сделать функцию, которая будет ожидать ответа от python о том, что она готова продолжить,
@@ -415,14 +432,16 @@ void init_command_handler(){
         {
             printf("%s command is realized\n", command_buffer);
 
+            ESP_ERROR_CHECK(esp_spiffs_check(SPIFFS_PARTITION_LABEL));
+
             // wait until python starts to read data
             vTaskDelay(pdMS_TO_TICKS(1000));
 
             size_t total, used = 0;
             ESP_ERROR_CHECK(esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used));
             char spiffs_data[128];
-            sprintf(spiffs_data, "total (bytes): %i used (bytes): %i\n", total, used);
-            ESP_LOGW(command_handler_tag, "%s", spiffs_data);
+            sprintf(spiffs_data, "bytes: total=%i used=%i\n", total, used);
+            ESP_LOGW(command_handler_tag, "\n%s", spiffs_data);
 
             // transmit this data to print in in python script 
             // протестировать возможности функций send with break и на стороне python cancel_read
@@ -435,7 +454,7 @@ void init_command_handler(){
         }
 
 
-        else if(strcmp(command_buffer, "load passes to spiffs") == 0)
+        else if(strcmp(command_buffer, "load spiffs data to pc") == 0)
 
 
         {

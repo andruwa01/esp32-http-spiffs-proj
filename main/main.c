@@ -31,11 +31,10 @@ void app_main(void)
         ESP_LOGE(tag_main, "ERROR: SPIFFS_NUMBER_OF_FILES is more than SPIFFS_MAX_FILES: CHANGE IT IN options.h");
     }
 
-    initialize_spiffs();
+    init_spiffs();
     // initialize_nvs_flash();
     // initialize_wifi();
-    uart_configure();
-
+    init_uart();
     init_command_handler();
 
     // button_handler();

@@ -25,7 +25,14 @@ void add_line_to_spiffs(char* path_to_spiffs_file, char* text_to_write){
 
 void clear_data_from_spiffs_file(char* path_to_spiffs_file){
     fclose(fopen(path_to_spiffs_file, "w"));
-    ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
+    // ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
+    struct stat st;
+    if(stat(path_to_spiffs_file, &st) == 0){
+        unlink(path_to_spiffs_file);
+        ESP_LOGW(spiffs_tag, "file %s was unlinked (full cleared) from spiffs", path_to_spiffs_file);
+    }
+
+    ESP_ERROR_CHECK(esp_spiffs_check(SPIFFS_PARTITION_LABEL));
 }
 
 void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size){
@@ -56,7 +63,7 @@ void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffe
     ESP_LOGI(spiffs_tag, "Readed %i bytes from %s file:", size_of_spiffs_data, path_to_spiffs_file);
 }
 
-void initialize_spiffs(void){
+void init_spiffs(void){
     ESP_LOGI(spiffs_tag, "Initializing spiffs");
 
     // Configurate structure for esp_vfs_spiffs_register
