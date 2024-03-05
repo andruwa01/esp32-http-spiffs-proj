@@ -35,6 +35,7 @@ const static size_t command_size = 128;
 // }
 
 static void wait_until_python_process(int ms_to_wait){
+    printf("wait %i seconds until python performs. . .\n", ms_to_wait / 1000);
     vTaskDelay(pdMS_TO_TICKS(ms_to_wait));
 }
 
@@ -59,6 +60,12 @@ static void get_data_from_uart(char* buffer_for_contents, size_t size_of_buffer)
 }
 
 static void create_spiffs_txt_file_path_by_params(char* file_name, const char* name_postfix, char* buffer_to_save_path){
+        if (file_name == NULL || buffer_to_save_path == NULL){
+            ESP_LOGE(command_handler_tag, "ERROR! NULL pointer was detected! Check function arguments");
+            return;
+        } else if (name_postfix == NULL){
+            name_postfix = "";
+        }
         // create file path by satellite name
         // char user_input_folder[] = "passes_user_input";
         char spiffs_satellites_user_input_path[
@@ -260,7 +267,11 @@ void init_command_handler(){
             response_next_action();
         }
 
-        else if(strcmp(command_buffer, "clean all") == 0){
+
+        else if(strcmp(command_buffer, "clean all") == 0)
+
+
+        {
             DIR *dptr;
             struct dirent *dir;
             dptr = opendir(SPIFFS_BASE_PATH);
@@ -275,24 +286,12 @@ void init_command_handler(){
 
             response_next_action();
         }
+
+
         else if(strcmp(command_buffer, "clean spiffs") == 0)
+
+
         {
-            #if defined(SPIFFS_CLEAN_FULL_PASSES_FILES)
-            for(int satellite_index = 0; satellite_index < SPIFFS_NUMBER_OF_FILES; satellite_index++){
-                char spiffs_file_path[strlen(SPIFFS_BASE_PATH) + strlen("/") + strlen(satellites[satellite_index].name)];
-                sprintf(spiffs_file_path, "%s/%s", SPIFFS_BASE_PATH, satellites[satellite_index].name);
-                if(fclose(fopen(spiffs_file_path, "w")) != 0){
-                    ESP_LOGE(command_handler_tag, "Error: can't open and close (clear) file %s", spiffs_file_path);
-                    return;
-                } else {
-                    ESP_LOGW(command_handler_tag, "File %s was cleared", spiffs_file_path);
-                };
-            }
-
-            #else
-            ESP_LOGW(command_handler_tag, "You don't use spiffs!");
-            #endif
-
             #if defined(SPIFFS_CLEAR_FILES)
 
             response_next_action();
@@ -340,7 +339,11 @@ void init_command_handler(){
 
             response_next_action();
         }
+
+
         else if(strcmp(command_buffer, "push command files") == 0)
+
+
         {
             printf("%s command is realized\n", command_buffer);
 
@@ -437,20 +440,53 @@ void init_command_handler(){
             // wait until python starts to read data
             vTaskDelay(pdMS_TO_TICKS(1000));
 
-            size_t total, used = 0;
-            ESP_ERROR_CHECK(esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used));
+            size_t spiffs_total, spiffs_used = 0;
+            ESP_ERROR_CHECK(esp_spiffs_info(SPIFFS_PARTITION_LABEL, &spiffs_total, &spiffs_used));
             char spiffs_data[128];
-            sprintf(spiffs_data, "bytes: total=%i used=%i\n", total, used);
+            sprintf(spiffs_data, "bytes: spiffs_total=%i spiffs_used=%i\n", spiffs_total, spiffs_used);
             ESP_LOGW(command_handler_tag, "\n%s", spiffs_data);
 
             // transmit this data to print in in python script 
             // протестировать возможности функций send with break и на стороне python cancel_read
-            size_t sended_bytes = uart_write_bytes(UART_NUM_0, (void*)spiffs_data, strlen(spiffs_data));
+            uart_write_bytes(UART_NUM_0, (void*)spiffs_data, strlen(spiffs_data));
 
             // wait until python wait response function activated
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            // vTaskDelay(pdMS_TO_TICKS(1000));
+            wait_until_python_process(1000);
 
+            // send info that we are finished sending first part of statistics about spiffs 
             response_next_action();
+
+            // push information about all files in spiffs
+
+            // initialize empty string
+            char spiffs_files_info[2 * SPIFFS_MAX_FILES * (SPIFFS_MAX_FILE_NAME_LENGTH + strlen(": ") + 4 * sizeof(char))];
+            spiffs_files_info[0] = '\0';
+
+            DIR *dptr;
+            struct dirent *dir;
+            dptr = opendir(SPIFFS_BASE_PATH);
+            if(dptr){
+                while((dir = readdir(dptr)) != NULL){
+                    char file_path[SPIFFS_MAX_FILE_NAME_LENGTH + strlen("/") + strlen(dir->d_name)];
+                    sprintf(file_path, "%s/%s", SPIFFS_BASE_PATH, dir->d_name);
+
+                    // get the size of one file
+                    size_t size_of_file;
+                    FILE* fp = fopen(file_path, "r");
+                    fseek(fp, 0, SEEK_END);
+                    size_of_file = ftell(fp);
+                    fclose(fp);
+
+                    // name_of_file.txt: 10
+                    char file_stats_line[strlen(dir->d_name) + strlen(": ") + 4 * sizeof(char)];
+                    sprintf(file_stats_line, "%s: %i\n", dir->d_name, size_of_file);
+                    strcat(spiffs_files_info, file_stats_line);
+                }
+                closedir(dptr);
+            }
+
+            uart_write_bytes(UART_NUM_0, spiffs_files_info, strlen(spiffs_files_info));
         }
 
 
@@ -463,10 +499,33 @@ void init_command_handler(){
             // send signal to python that we got command
             response_next_action();
 
+            // get stats about spiffs
+            size_t total = 0, used = 0;
+            esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
+            size_t free_space = total - used;
+
+            char free_space_buffer[strlen("free=") + 4 * sizeof(char) + sizeof("\n")];
+            // free_space_buffer[0] = '\0';
+
+            sprintf(free_space_buffer, "free=%i\n", free_space);
+
+            // give some time so uart in python will start reading
+            wait_until_python_process(5000);
+
+            // send free space information to python script
+            uart_write_bytes(UART_NUM_0, free_space_buffer, strlen(free_space_buffer));
+            response_next_action();
+
+            // wait until python gets data and handle it
+            wait_until_python_process(15000);
+
+            // response to python that we finished writing info about free space
+            response_next_action();
+
             // iterate over command files
             while(true){
                 // give 1 sec to avoid bug when while(true) works too fast and couses problems
-                vTaskDelay(pdMS_TO_TICKS(1000));
+                wait_until_python_process(1000);
 
                 char pass_buffer[PASS_DATA_SIZE];
                 get_data_from_uart(pass_buffer, PASS_DATA_SIZE);
