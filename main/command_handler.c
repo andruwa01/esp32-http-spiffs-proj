@@ -6,36 +6,12 @@ const static char* next_file_command = "NEXT_FILE";
 const static char* text_file_extension = ".txt"; 
 const static char* name_postfix_command = "_command";
 const static char* name_postfix_pass = "_passes";
+const static char* message_get_command = "get command";
+const static char* message_finish_command = "finish working with command";
 const static size_t command_size = 128;
 
-
-// static void wait_response_from_pc(void){
-//     char response_correct_value[] = "RESPONSE FROM PC";
-//     char response_from_uart[256]; 
-
-//     int data_length_chars = 0;
-//     ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&data_length_chars));
-//     printf("chars in Rx buffer: %i\n", data_length_chars);
-
-//     while(true){
-//         ESP_LOGW(command_handler_tag, "Watiting response from pc . . .");
-//         data_length_chars = uart_read_bytes(UART_NUM_0, response_from_uart, 256, 100);
-
-//         if(strcmp(response_from_uart, response_correct_value) == 0){
-//             if(data_length_chars){
-//                 ESP_LOGW(command_handler_tag, "%i chars was readed, contents: %s", data_length_chars, (char*)response_from_uart);
-//             }
-//             break;
-//         }
-
-//         vTaskDelay(pdMS_TO_TICKS(1000));
-//     }
-//     ESP_LOGW(command_handler_tag, "Got response from pc!");
-//     uart_flush(UART_NUM_0);
-// }
-
-static void wait_until_python_process(int ms_to_wait){
-    printf("wait %i seconds until python performs. . .\n", ms_to_wait / 1000);
+static void wait(int ms_to_wait){
+    // printf("Waiting %i seconds to synchronize time. . .\n", ms_to_wait / 1000);
     vTaskDelay(pdMS_TO_TICKS(ms_to_wait));
 }
 
@@ -57,6 +33,34 @@ static void get_data_from_uart(char* buffer_for_contents, size_t size_of_buffer)
     #if defined(PRINT_DATA_FROM_UART)
     printf("\n%s\n", buffer_for_contents);
     #endif
+}
+
+static void wait_response_from_python(char* what_we_are_waiting){
+        wait(1000);
+
+        // clear command_buffer value from uart rx
+        uart_flush_input(UART_NUM_0);
+        char response_buffer[256];
+        get_data_from_uart(response_buffer, 256);
+        // printf("waiting context: %s\n", what_we_are_waiting);
+        ESP_LOGW(command_handler_tag, "wait event: %s", what_we_are_waiting);
+
+        while(strcmp(response_buffer, "NEXT_ACTION_BOARD") != 0){
+            // printf("%s\n", "wait next action message . . .");
+            // printf("wait event: %s\n", what_we_are_waiting);
+            ESP_LOGW(command_handler_tag, "wait event: %s", what_we_are_waiting);
+            get_data_from_uart(response_buffer, 256);
+            printf("%s\n", response_buffer);
+
+            wait(1000);
+        }
+
+        // wait(1000);
+}
+
+static void wait_until_python_process(int ms_to_wait){
+    printf("wait %i seconds until python performs. . .\n", ms_to_wait / 1000);
+    vTaskDelay(pdMS_TO_TICKS(ms_to_wait));
 }
 
 static void create_spiffs_txt_file_path_by_params(char* file_name, const char* name_postfix, char* buffer_to_save_path){
@@ -90,8 +94,11 @@ static void clear_spiffs_file_by_params(char* file_name, const char* name_postfi
         clear_data_from_spiffs_file(file_path_buffer);
 }
 
-static void response_next_action(void){
-    wait_until_python_process(1000);
+static void send_response_to_python(char* what_we_are_sending){
+    wait(1000);
+    // printf("sending response to python . . .\n");
+    // printf("sending context: %s\n", what_we_are_sending);
+    ESP_LOGW(command_handler_tag, "send event: %s", what_we_are_sending);
 
     uart_flush(UART_NUM_0);
 
@@ -100,6 +107,12 @@ static void response_next_action(void){
     ESP_LOGW(command_handler_tag, "%i bytes were sended", data_length_chars);
     
     uart_flush(UART_NUM_0);
+
+    wait(1000);
+}
+
+static void response_next_command(){
+    send_response_to_python("finish working with command");
 }
 
 void init_command_handler(){
@@ -122,12 +135,11 @@ void init_command_handler(){
         //     printf("current command (after clearence): %s\n", command_buffer);
         //     #endif
 
-        //     response_next_action();
+        //     send_response_to_python();
         // }
         if(strcmp(command_buffer, "give spiffs data to pc") == 0)
         {
-            // we got command
-            response_next_action(); 
+            send_response_to_python("we got command"); 
 
             // give some time to python script for writing options file to uart (esle we got runtime exception)
             wait_until_python_process(1000);
@@ -152,7 +164,7 @@ void init_command_handler(){
             // get_data_from_uart(temp_data_buffer, size_of_buffer);
 
             // we read file
-            // response_next_action();
+            // send_response_to_python();
             
             char options_file_name[] = "input_options"; 
             char spiffs_satellites_user_input_path[SPIFFS_MAX_FILE_NAME_LENGTH];
@@ -167,13 +179,13 @@ void init_command_handler(){
                 
                 // TODO delete
                 // got data from python
-                // response_next_action();
+                // send_response_to_python();
 
                 if(strcmp(temp_data_buffer, "END FILES TRANSMISSION") == 0){
                     printf("%s\n", "END FILES TRANSMISSION RAISED!");
 
                     // so stop iterate over command files and send info about this in python 
-                    response_next_action();
+                    send_response_to_python("");
                     break;
                 }
                 
@@ -197,7 +209,7 @@ void init_command_handler(){
                         if(strcmp(data_line, "END_FILE") == 0){
                             // test
                             // read data from python finished
-                            response_next_action();
+                            send_response_to_python("send info that we finished read info about python");
 
                             // so we need to break loop of current file reading (to not add this line to spiffs) 
                             break;
@@ -256,15 +268,15 @@ void init_command_handler(){
             }
             // TODO delete
             // finish writing file
-            // response_next_action();
+            // send_response_to_python();
 
             // clear command file on finish
             clear_data_from_spiffs_file(spiffs_satellites_user_input_path);
 
             wait_until_python_process(TIME_DELAY_BEFORE_RESPONSE_SENDED_MS);
-            // response_next_action();
+            // send_response_to_python();
 
-            response_next_action();
+            send_response_to_python("finished working with command");
         }
 
 
@@ -284,7 +296,7 @@ void init_command_handler(){
                 closedir(dptr);
             }
 
-            response_next_action();
+            send_response_to_python("finish working with command");
         }
 
 
@@ -293,16 +305,14 @@ void init_command_handler(){
 
         {
             #if defined(SPIFFS_CLEAR_FILES)
+            send_response_to_python(message_get_command);
 
-            response_next_action();
-
-            // todo сделать функцию, которая будет ожидать ответа от python о том, что она готова продолжить,
-            // тогда можно будет применить её и к этой команде и к тому случаю ,когда у нас выгружаются большие объёмы данных с 
-            // python. В данном случае delay является костылём - каким он и является в случае любого большого объёма данных и костыль этот работает до тех пор, пока 
-            // данные с питона отправляются достаточно быстро, в противном случае эти данные не попадут в код строчек ниже и пройдут дальше, что будет являться ошибкой
+            send_response_to_python("start waiting list of satellites");
 
             // give 5 sec write list to buffer
-            vTaskDelay(pdMS_TO_TICKS(5000));
+            // vTaskDelay(pdMS_TO_TICKS(5000));
+
+            wait_response_from_python("python wrote list to buffer");
 
             // get data from uart to buffer 
             size_t buffer_size = 256;
@@ -337,7 +347,7 @@ void init_command_handler(){
             }
             #endif
 
-            response_next_action();
+            send_response_to_python(message_finish_command);
         }
 
 
@@ -348,7 +358,7 @@ void init_command_handler(){
             printf("%s command is realized\n", command_buffer);
 
             // send signal to python that we got command
-            response_next_action();
+            send_response_to_python("got command");
 
             #if defined(LOAD_ALL_COMMAND_FILES)
 
@@ -376,7 +386,7 @@ void init_command_handler(){
                     printf("%s\n", "END FILES TRANSMISSION RAISED!");
 
                     // so stop iterate over command files and send info about this in python 
-                    response_next_action();
+                    send_response_to_python("stop iterate over files");
                     break;
                 }
 
@@ -421,10 +431,10 @@ void init_command_handler(){
                     uart_flush(UART_NUM_0);
                 }
                 // signal to python that we could read another file
-                response_next_action();
+                send_response_to_python("we can read another file");
             }
             // send signal to python that we could read another command 
-            response_next_action();
+            send_response_to_python("we can read another command");
             #endif
         }
 
@@ -435,10 +445,14 @@ void init_command_handler(){
         {
             printf("%s command is realized\n", command_buffer);
 
+            send_response_to_python(message_get_command);
+            wait_response_from_python("python starts reading data");
+
+            // check spiffs
             ESP_ERROR_CHECK(esp_spiffs_check(SPIFFS_PARTITION_LABEL));
 
             // wait until python starts to read data
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            // vTaskDelay(pdMS_TO_TICKS(1000));
 
             size_t spiffs_total, spiffs_used = 0;
             ESP_ERROR_CHECK(esp_spiffs_info(SPIFFS_PARTITION_LABEL, &spiffs_total, &spiffs_used));
@@ -452,10 +466,11 @@ void init_command_handler(){
 
             // wait until python wait response function activated
             // vTaskDelay(pdMS_TO_TICKS(1000));
-            wait_until_python_process(1000);
+            // wait_until_python_process(1000);
 
-            // send info that we are finished sending first part of statistics about spiffs 
-            response_next_action();
+            send_response_to_python("signal that we finished writing first part of info");
+            // wait signal that we can write to python 
+            wait_response_from_python("board can write files to python");
 
             // push information about all files in spiffs
 
@@ -487,6 +502,10 @@ void init_command_handler(){
             }
 
             uart_write_bytes(UART_NUM_0, spiffs_files_info, strlen(spiffs_files_info));
+
+            wait_response_from_python("python finishes working with data");
+
+            send_response_to_python(message_finish_command);
         }
 
 
@@ -497,7 +516,11 @@ void init_command_handler(){
             printf("%s command is realized\n", command_buffer);
 
             // send signal to python that we got command
-            response_next_action();
+            send_response_to_python(message_get_command);
+
+            // test
+            // continue only when python starts reading files
+            wait_response_from_python("wait when python starts reading files");
 
             // get stats about spiffs
             size_t total = 0, used = 0;
@@ -510,17 +533,19 @@ void init_command_handler(){
             sprintf(free_space_buffer, "free=%i\n", free_space);
 
             // give some time so uart in python will start reading
-            wait_until_python_process(5000);
+            // wait_until_python_process(5000);
 
             // send free space information to python script
             uart_write_bytes(UART_NUM_0, free_space_buffer, strlen(free_space_buffer));
-            response_next_action();
+
+            // wait info from python that it finished reading data
+            wait_response_from_python("finish reading data");
 
             // wait until python gets data and handle it
-            wait_until_python_process(15000);
+            // wait_until_python_process(15000);
 
-            // response to python that we finished writing info about free space
-            response_next_action();
+            // response to python that we ready to get files with data
+            send_response_to_python("ready to get files with data");
 
             // iterate over command files
             while(true){
@@ -539,7 +564,7 @@ void init_command_handler(){
                 if(strcmp(pass_buffer, "END FILES TRANSMISSION") == 0){
                     printf("%s\n", "END FILES TRANSMISSION RAISED!");
                     // so stop iterate over command files and send info about this in python 
-                    response_next_action();
+                    send_response_to_python("end files transmission");
                     break;
                 }
 
@@ -635,17 +660,56 @@ void init_command_handler(){
                 }
 
                 // signal to python that we could read another file
-                response_next_action();
+                send_response_to_python("we can read another file");
             }
 
-            // we don't need here response_next_action(); because last response will be in while cycle 
-        }
-        else
-        {
-            ESP_LOGW(command_handler_tag, "\nNo command was passed, new cycle");
+            // test
+            send_response_to_python(message_finish_command);
+            // we don't need here send_response_to_python(); because last response will be in while cycle 
         }
 
-        // wait 1 sec to avoid while loop looping too fast
-        vTaskDelay(pdMS_TO_TICKS(1000));
+
+        else if(strcmp(command_buffer, "command test") == 0)
+
+
+        {
+            printf("get command %s\n", command_buffer);
+
+            // // clear command_buffer value from uart rx
+            // uart_flush_input(UART_NUM_0);
+            // char response_buffer[256];
+            // get_data_from_uart(response_buffer, 256);
+
+            // while(strcmp(response_buffer, "NEXT_ACTION_BOARD") != 0){
+            //     printf("%s\n", "wait next action message . . .");
+            //     get_data_from_uart(response_buffer, 256);
+            //     printf("%s\n", response_buffer);
+
+            //     wait(1000);
+            // }
+            wait_response_from_python("");
+
+            // begin action
+            printf("%s\n", "test action");
+
+            // end action response
+            send_response_to_python("");
+
+            // test waiting
+            // wait_until_python_process(5000);
+
+            // send info that we end working with this commann
+            send_response_to_python("");
+        }
+
+
+        else
+
+
+        {
+            ESP_LOGW(command_handler_tag, "\nNo command, new cycle");
+        }
+
+        wait(1000);
     }
 }
