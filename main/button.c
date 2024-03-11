@@ -31,7 +31,7 @@ void button_callback(){
     int gpio_level_on_finish = gpio_get_level(48);
     printf("gpio level: %i\n", gpio_level_on_finish);
 
-    // uart_send_message();
+    // uart_send_test_message();
     // initialize_get_request();
     // initialize_get_requests_for_all_satellites();
     // initialize_get_request(49338, "jilin-01_gaofen_2f.txt");

@@ -10,7 +10,7 @@
 
 const static char *uart_tag = "uart"; 
 
-void uart_send_message(void){
+void uart_send_test_message(void){
     char data_to_transmit[4000] = "message from the board over UART0\n"; 
 
     ESP_LOGW(uart_tag, "start transmitting data via uart. . .");

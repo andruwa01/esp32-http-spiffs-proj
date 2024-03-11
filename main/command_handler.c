@@ -1,14 +1,21 @@
 #include "command_handler.h"
 
 const static char* command_handler_tag = "command_handler";
-const static char next_action_value[16] = "NEXT_ACTION\n";
+// const static char next_action_value[16] = "NEXT_ACTION\n";
+const static char* next_action_value = "NEXT_ACTION\n";
 const static char* next_file_command = "NEXT_FILE";
 const static char* text_file_extension = ".txt"; 
 const static char* name_postfix_command = "_command";
-const static char* name_postfix_pass = "_passes";
+const static char* name_postfix_response = "_response";
 const static char* message_get_command = "get command";
 const static char* message_finish_command = "finish working with command";
 const static size_t command_size = 128;
+
+const static char* command_send_spiffs_data_to_pc  = "give spiffs data to pc"; 
+const static char* command_send_spiffs_info_to_pc  = "get spiffs info";
+const static char* command_clean_spiffs_by_id      = "clean spiffs";
+const static char* command_clean_spiffs_all        = "clean all";
+const static char* command_load_spiffs_files_to_pc = "load spiffs data to pc";
 
 static void wait(int ms_to_wait){
     // printf("Waiting %i seconds to synchronize time. . .\n", ms_to_wait / 1000);
@@ -94,7 +101,7 @@ static void clear_spiffs_file_by_params(char* file_name, const char* name_postfi
         clear_data_from_spiffs_file(file_path_buffer);
 }
 
-static void send_response_to_python(char* what_we_are_sending){
+static void send_response_to_python(const char* what_we_are_sending){
     wait(1000);
     // printf("sending response to python . . .\n");
     // printf("sending context: %s\n", what_we_are_sending);
@@ -103,7 +110,8 @@ static void send_response_to_python(char* what_we_are_sending){
     uart_flush(UART_NUM_0);
 
     int data_length_chars = 0;
-    data_length_chars = uart_write_bytes(UART_NUM_0, &next_action_value, strlen(next_action_value));
+    // data_length_chars = uart_write_bytes(UART_NUM_0, &next_action_value, strlen(next_action_value));
+    data_length_chars = uart_write_bytes(UART_NUM_0, next_action_value, strlen(next_action_value));
     ESP_LOGW(command_handler_tag, "%i bytes were sended", data_length_chars);
     
     uart_flush(UART_NUM_0);
@@ -137,7 +145,7 @@ void init_command_handler(){
 
         //     send_response_to_python();
         // }
-        if(strcmp(command_buffer, "give spiffs data to pc") == 0)
+        if(strcmp(command_buffer, command_send_spiffs_data_to_pc) == 0)
         {
             send_response_to_python("we got command"); 
 
@@ -169,6 +177,7 @@ void init_command_handler(){
             char options_file_name[] = "input_options"; 
             char spiffs_satellites_user_input_path[SPIFFS_MAX_FILE_NAME_LENGTH];
 
+            // read file with options
             while(true){
                 // test delay wait time for python script
                 wait_until_python_process(1000);
@@ -184,8 +193,7 @@ void init_command_handler(){
                 if(strcmp(temp_data_buffer, "END FILES TRANSMISSION") == 0){
                     printf("%s\n", "END FILES TRANSMISSION RAISED!");
 
-                    // so stop iterate over command files and send info about this in python 
-                    send_response_to_python("");
+                    send_response_to_python("stop iterating over file");
                     break;
                 }
                 
@@ -243,10 +251,10 @@ void init_command_handler(){
 
                 // create file spiffs path for sat_name
                 char spiffs_path[SPIFFS_MAX_FILE_NAME_LENGTH];
-                create_spiffs_txt_file_path_by_params(sat_id, name_postfix_pass, spiffs_path);
-                char pass_buffer[PASS_DATA_SIZE];
-                read_data_from_spiffs_file_to_buffer(spiffs_path, pass_buffer, PASS_DATA_SIZE);
-                strcat(pass_buffer, "END_OF_THE_FILE\n");
+                create_spiffs_txt_file_path_by_params(sat_id, name_postfix_response, spiffs_path);
+                char response_buffer[RESPONSE_DATA_SIZE];
+                read_data_from_spiffs_file_to_buffer(spiffs_path, response_buffer, RESPONSE_DATA_SIZE);
+                strcat(response_buffer, "END_OF_THE_FILE\n");
 
                 //test
                 create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_path);
@@ -255,7 +263,7 @@ void init_command_handler(){
                 strcat(command_buffer, "END_OF_THE_FILE\n");
 
                 // send sat data to uart to python script get it
-                int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&pass_buffer, strlen(pass_buffer));
+                int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&response_buffer, strlen(response_buffer));
                 ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
 
                 // test
@@ -273,14 +281,17 @@ void init_command_handler(){
             // clear command file on finish
             clear_data_from_spiffs_file(spiffs_satellites_user_input_path);
 
-            wait_until_python_process(TIME_DELAY_BEFORE_RESPONSE_SENDED_MS);
+            // TODO delete
+            // wait_until_python_process(TIME_DELAY_BEFORE_RESPONSE_SENDED_MS);
             // send_response_to_python();
+
+            wait_response_from_python("wait signal from python that it finished handle data");
 
             send_response_to_python("finished working with command");
         }
 
 
-        else if(strcmp(command_buffer, "clean all") == 0)
+        else if(strcmp(command_buffer, command_clean_spiffs_all) == 0)
 
 
         {
@@ -300,7 +311,7 @@ void init_command_handler(){
         }
 
 
-        else if(strcmp(command_buffer, "clean spiffs") == 0)
+        else if(strcmp(command_buffer, command_clean_spiffs_by_id) == 0)
 
 
         {
@@ -332,7 +343,7 @@ void init_command_handler(){
             }
 
             // clear first line in spiffs file (first filename)
-            clear_spiffs_file_by_params(first_line_in_file, name_postfix_pass);
+            clear_spiffs_file_by_params(first_line_in_file, name_postfix_response);
             clear_spiffs_file_by_params(first_line_in_file, name_postfix_command);
 
             // next line in file (filename)
@@ -340,7 +351,7 @@ void init_command_handler(){
 
             // clear_satellite_files_by_name();
             while(data_line){
-                clear_spiffs_file_by_params(data_line, name_postfix_pass);
+                clear_spiffs_file_by_params(data_line, name_postfix_response);
                 clear_spiffs_file_by_params(data_line, name_postfix_command);
                 // clear next file name line 
                 data_line = strtok(NULL, "\n");
@@ -439,7 +450,7 @@ void init_command_handler(){
         }
 
 
-        else if(strcmp(command_buffer, "get spiffs info") == 0)
+        else if(strcmp(command_buffer, command_send_spiffs_info_to_pc) == 0)
 
 
         {
@@ -478,8 +489,8 @@ void init_command_handler(){
             char spiffs_files_info[2 * SPIFFS_MAX_FILES * (SPIFFS_MAX_FILE_NAME_LENGTH + strlen(": ") + 4 * sizeof(char))];
             spiffs_files_info[0] = '\0';
 
-            DIR *dptr;
-            struct dirent *dir;
+            DIR* dptr;
+            struct dirent* dir;
             dptr = opendir(SPIFFS_BASE_PATH);
             if(dptr){
                 while((dir = readdir(dptr)) != NULL){
@@ -509,7 +520,7 @@ void init_command_handler(){
         }
 
 
-        else if(strcmp(command_buffer, "load spiffs data to pc") == 0)
+        else if(strcmp(command_buffer, command_load_spiffs_files_to_pc) == 0)
 
 
         {
@@ -552,8 +563,8 @@ void init_command_handler(){
                 // give 1 sec to avoid bug when while(true) works too fast and couses problems
                 wait_until_python_process(1000);
 
-                char pass_buffer[PASS_DATA_SIZE];
-                get_data_from_uart(pass_buffer, PASS_DATA_SIZE);
+                char pass_buffer[RESPONSE_DATA_SIZE];
+                get_data_from_uart(pass_buffer, RESPONSE_DATA_SIZE);
 
                 // test print
                 ESP_LOGI(command_handler_tag, "\n%s", pass_buffer);
@@ -596,7 +607,7 @@ void init_command_handler(){
                     // printf("%s\n", current_delimiter);
 
                     // test
-                    char name_postfix[strlen(name_postfix_command) + 1];
+                    char name_postfix[strlen(name_postfix_command) + strlen(name_postfix_response)];
                     char* test_ptr = strtok_r(data_line_with_id, current_delimiter, &element_saveptr);
 
                     // test print
@@ -617,7 +628,7 @@ void init_command_handler(){
                         printf("current postfix: %s\n", name_postfix);
                     } else {
                         // change file postfix to pass postfix
-                        strcpy(name_postfix, name_postfix_pass);
+                        strcpy(name_postfix, name_postfix_response);
 
                         printf("current postfix: %s\n", name_postfix);
                     }
@@ -629,7 +640,7 @@ void init_command_handler(){
 
                     // char* satellite_id = strtok_r(NULL, req_data_delimiter, &element_saveptr);
                     char spiffs_passes_file_path[SPIFFS_MAX_FILE_NAME_LENGTH];
-                    // create_spiffs_txt_file_path_by_params(satellite_id, name_postfix_pass, spiffs_passes_file_path);
+                    // create_spiffs_txt_file_path_by_params(satellite_id, name_postfix_response, spiffs_passes_file_path);
                     // test
                     create_spiffs_txt_file_path_by_params(satellite_id, name_postfix, spiffs_passes_file_path);
                     // first data line is start file line so we need to skip it

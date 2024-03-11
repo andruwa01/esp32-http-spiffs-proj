@@ -29,14 +29,14 @@
 #define HTTP_BUFFER_SIZE 5512
 #define TIME_TO_PUSH_BUTTON_MS 60000
 // #define PRINT_DATA_FROM_UART
-#define PASS_DATA_SIZE 5512
+#define RESPONSE_DATA_SIZE 5512
 #define COMMAND_DATA_SIZE 1256
 // WARNING! COULD BE STACK OVERFLOW, LOOK AT CONFIG_ESP_MAIN_TASK_STACK_SIZE
 // in skkconfig / idf.py menuconfib  
 
 // task delay for function and python. needs to be greater that timeout value
 // of serial port opened in python script
-#define TIME_DELAY_BEFORE_RESPONSE_SENDED_MS SPIFFS_MAX_FILES * 1000 + 6000
+// #define TIME_DELAY_BEFORE_RESPONSE_SENDED_MS SPIFFS_MAX_FILES * 1000 + 6000
 typedef struct{
     char name[SPIFFS_MAX_FILE_NAME_LENGTH];
     int id;
