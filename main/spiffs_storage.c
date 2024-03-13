@@ -35,14 +35,15 @@ void clear_data_from_spiffs_file(char* path_to_spiffs_file){
     ESP_ERROR_CHECK(esp_spiffs_check(SPIFFS_PARTITION_LABEL));
 }
 
-void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size){
+// void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size){
+esp_err_t read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size){
     ESP_LOGI(spiffs_tag, "reading file: %s", path_to_spiffs_file);
 
     FILE* fpr = fopen(path_to_spiffs_file, "r"); 
 
     if(fpr == NULL){
         ESP_LOGE(spiffs_tag, "Failed to open file %s for reading", path_to_spiffs_file);
-        return;
+        return ESP_FAIL;
     }
 
     fseek(fpr, 0, SEEK_END);
@@ -51,7 +52,7 @@ void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffe
 
     if(size_of_spiffs_data > buffer_size){
         ESP_LOGE(spiffs_tag, "ERROR! %i bytes don't fit in %i size buffer, return from function", size_of_spiffs_data, buffer_size);
-        return;
+        return ESP_FAIL;
     }
 
     fread(buffer_to_save_data, sizeof(char), size_of_spiffs_data, fpr);
@@ -61,6 +62,8 @@ void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffe
     fclose(fpr);
 
     ESP_LOGI(spiffs_tag, "Readed %i bytes from %s file:", size_of_spiffs_data, path_to_spiffs_file);
+
+    return ESP_OK;
 }
 
 void init_spiffs(void){

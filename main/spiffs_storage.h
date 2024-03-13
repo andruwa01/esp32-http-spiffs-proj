@@ -1,4 +1,5 @@
 #include "main.h"
+#include "esp_err.h"
 
 // Initializing spiffs with corresponding logs
 void init_spiffs(void);
@@ -14,4 +15,4 @@ void read_data_from_spiffs_file_and_format_partition(char* path_to_spiffs_file, 
 void clear_data_from_spiffs_file(char* path_to_spiffs_file);
 
 // Returns data from spiffs file
-void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size);
+esp_err_t read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size);

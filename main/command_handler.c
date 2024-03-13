@@ -16,6 +16,7 @@ const static char* command_send_spiffs_info_to_pc  = "get spiffs info";
 const static char* command_clean_spiffs_by_id      = "clean spiffs";
 const static char* command_clean_spiffs_all        = "clean all";
 const static char* command_load_spiffs_files_to_pc = "load spiffs data to pc";
+const static char* command_test                    = "command test";
 
 static void wait(int ms_to_wait){
     // printf("Waiting %i seconds to synchronize time. . .\n", ms_to_wait / 1000);
@@ -23,6 +24,9 @@ static void wait(int ms_to_wait){
 }
 
 static void get_data_from_uart(char* buffer_for_contents, size_t size_of_buffer){
+    // wait(2500);
+    // wait(1000);
+
     int data_length_chars = 0;
     ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&data_length_chars));
     printf("data in buffer: chars in Rx buffer: %i\n", data_length_chars);
@@ -43,10 +47,11 @@ static void get_data_from_uart(char* buffer_for_contents, size_t size_of_buffer)
 }
 
 static void wait_response_from_python(char* what_we_are_waiting){
-        wait(1000);
+        // wait(1500);
 
         // clear command_buffer value from uart rx
         uart_flush_input(UART_NUM_0);
+
         char response_buffer[256];
         get_data_from_uart(response_buffer, 256);
         // printf("waiting context: %s\n", what_we_are_waiting);
@@ -62,7 +67,8 @@ static void wait_response_from_python(char* what_we_are_waiting){
             wait(1000);
         }
 
-        // wait(1000);
+        // uart_flush_input(UART_NUM_0);
+        // wait(1500);
 }
 
 static void wait_until_python_process(int ms_to_wait){
@@ -253,22 +259,22 @@ void init_command_handler(){
                 char spiffs_path[SPIFFS_MAX_FILE_NAME_LENGTH];
                 create_spiffs_txt_file_path_by_params(sat_id, name_postfix_response, spiffs_path);
                 char response_buffer[RESPONSE_DATA_SIZE];
-                read_data_from_spiffs_file_to_buffer(spiffs_path, response_buffer, RESPONSE_DATA_SIZE);
-                strcat(response_buffer, "END_OF_THE_FILE\n");
+                if(read_data_from_spiffs_file_to_buffer(spiffs_path, response_buffer, RESPONSE_DATA_SIZE) == ESP_OK){
+                    strcat(response_buffer, "END_OF_THE_FILE\n");
+                    // send sat data to uart to python script get it
+                    int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&response_buffer, strlen(response_buffer));
+                    ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
+                };
 
                 //test
                 create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_path);
                 char command_buffer[COMMAND_DATA_SIZE];
-                read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, COMMAND_DATA_SIZE);
-                strcat(command_buffer, "END_OF_THE_FILE\n");
-
-                // send sat data to uart to python script get it
-                int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&response_buffer, strlen(response_buffer));
-                ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
-
-                // test
-                int command_bytes = uart_write_bytes(UART_NUM_0, (const char*)&command_buffer, strlen(command_buffer));
-                ESP_LOGW(command_handler_tag, "%i bytes were sended", command_bytes);
+                if(read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, COMMAND_DATA_SIZE) == ESP_OK){
+                    strcat(command_buffer, "END_OF_THE_FILE\n");
+                    // test
+                    int command_bytes = uart_write_bytes(UART_NUM_0, (const char*)&command_buffer, strlen(command_buffer));
+                    ESP_LOGW(command_handler_tag, "%i bytes were sended", command_bytes);
+                };
 
                 // test print
                 // printf("sat_name: %s\n", sat_name);
@@ -680,37 +686,20 @@ void init_command_handler(){
         }
 
 
-        else if(strcmp(command_buffer, "command test") == 0)
+        else if(strcmp(command_buffer, command_test) == 0)
 
 
         {
             printf("get command %s\n", command_buffer);
+            send_response_to_python(message_get_command);
 
-            // // clear command_buffer value from uart rx
-            // uart_flush_input(UART_NUM_0);
-            // char response_buffer[256];
-            // get_data_from_uart(response_buffer, 256);
-
-            // while(strcmp(response_buffer, "NEXT_ACTION_BOARD") != 0){
-            //     printf("%s\n", "wait next action message . . .");
-            //     get_data_from_uart(response_buffer, 256);
-            //     printf("%s\n", response_buffer);
-
-            //     wait(1000);
-            // }
-            wait_response_from_python("");
-
-            // begin action
-            printf("%s\n", "test action");
-
-            // end action response
-            send_response_to_python("");
-
-            // test waiting
-            // wait_until_python_process(5000);
+            wait_response_from_python("wait data is sended");
+            char file_buffer[128];
+            get_data_from_uart(file_buffer, 128);
+            printf("%s\n", file_buffer);
 
             // send info that we end working with this commann
-            send_response_to_python("");
+            send_response_to_python(message_finish_command);
         }
 
 
