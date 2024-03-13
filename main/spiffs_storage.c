@@ -24,7 +24,14 @@ void add_line_to_spiffs(char* path_to_spiffs_file, char* text_to_write){
 }
 
 void clear_data_from_spiffs_file(char* path_to_spiffs_file){
-    fclose(fopen(path_to_spiffs_file, "w"));
+    FILE* fp = fopen(path_to_spiffs_file, "w");
+    if(fp == NULL){
+        ESP_LOGE(spiffs_tag, "Can't clear data from spiffs file %s", path_to_spiffs_file);
+        return;
+    }
+
+    fclose(fp);
+
     // ESP_LOGW(spiffs_tag, "File %s was cleared", path_to_spiffs_file);
     struct stat st;
     if(stat(path_to_spiffs_file, &st) == 0){
