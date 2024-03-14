@@ -14,8 +14,8 @@
 
 // Source headers
 #include "spiffs_storage.h"
-// #include "nvs.h"
-// #include "wifi.h"
+#include "nvs.h"
+#include "wifi.h"
 // #include "http_client.h"
 #include "api_key.h" // key for request (to exclude from git)
 // #include <cJSON.h>

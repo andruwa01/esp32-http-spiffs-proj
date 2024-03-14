@@ -29,7 +29,6 @@ static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_b
         wifi_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
-
 }
 
 void initialize_wifi(void){
@@ -58,8 +57,6 @@ void initialize_wifi(void){
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_configuration));
     ESP_ERROR_CHECK(esp_wifi_start());
-
-    // ESP_ERROR_CHECK(esp_wifi_connect());
 
     ESP_LOGI(TAG, "wifi_sta_initialization_finished");
 

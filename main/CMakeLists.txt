@@ -1,31 +1,17 @@
 idf_component_register(
-    # Main compile configuration 
-    # SRCS  "main.c" "spiffs_storage.c" "nvs_flash.c" "wifi.c" "http_client.c" "satellite_data_parser.c" "time_converter.c"  
-    # INCLUDE_DIRS "." 
-
-    # New compile configuration
-    # SRCS "command_handler.c"
-    #      "main.c" 
-    #      "spiffs_storage.c" 
-    #      "nvs.c" "wifi.c" 
-    #      "http_client.c" 
-    #      "button.c" 
-    #      "freertos_handler.c" 
-    #      "uart.c" 
-    #      "satellite_data_parser.c" 
-    #      "time_converter.c"
+    # esp32-uart-python command project configuration 
+    # SRCS "wifi.c" "main.c"
     #      "command_handler.c"
+    #      "spiffs_storage.c"
+    #      "uart.c"
     # INCLUDE_DIRS "."
 
-    # Final configuration without networking handling in board 
+    # Test udp (wifi-client)
     SRCS "main.c"
-         "command_handler.c"
-         "spiffs_storage.c"
-         "uart.c"
-    INCLUDE_DIRS "."
+        "wifi.c"
+        "nvs.c"
 
-    # Test compile configuration
-    # SRCS "main.c" "button.c" "uart.c"
+    INCLUDE_DIRS "."
 
     # EMBED_TXTFILES certificate.pem
 )
