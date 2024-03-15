@@ -1,6 +1,6 @@
 idf_component_register(
     # esp32-uart-python command project configuration 
-    # SRCS "wifi.c" "main.c"
+    # SRCS "udp.c" "wifi.c" "main.c"
     #      "command_handler.c"
     #      "spiffs_storage.c"
     #      "uart.c"
@@ -8,8 +8,9 @@ idf_component_register(
 
     # Test udp (wifi-client)
     SRCS "main.c"
-        "wifi.c"
-        "nvs.c"
+         "wifi.c"
+         "nvs.c"
+         "udp.c"
 
     INCLUDE_DIRS "."
 

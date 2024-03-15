@@ -1,4 +1,3 @@
-#include "main.h"
 #include "esp_err.h"
 
 // Initializing spiffs with corresponding logs
