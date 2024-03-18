@@ -3,7 +3,7 @@
 const static char *tag_udp = "udp";
 
 void udp_task(void *pvParameters){
-    TickType_t xLastWakeTime;
+    // TickType_t xLastWakeTime;
     int sockfd;
     struct sockaddr_in servaddr, cliaddr;
 
@@ -22,7 +22,7 @@ void udp_task(void *pvParameters){
     cliaddr.sin_port = htons(CONFIG_CLIENT_PORT);
 
     // link socket with client
-    if(bind(sockfd, (const struct sockaddr *)&cliaddr, sizeof(struct sockaddr_in)) < 0){
+    if(bind(sockfd, (const struct sockaddr *) &cliaddr, sizeof(struct sockaddr_in)) < 0){
         ESP_LOGE(tag_udp, "socket not binded\n");
         vTaskDelete(NULL);
     }
@@ -36,12 +36,14 @@ void udp_task(void *pvParameters){
     // xLastWakeTime = xTaskGetTickCount();
 
     for(short i = 0;;i++){
-        sendto(sockfd, &i, 2, 0, (struct sockaddr*)&servaddr, sizeof(servaddr));
+        // char *message_to_send = "hi";
+        char message_to_send[] = "hello from esp32";
+        sendto(sockfd, &message_to_send, strlen(message_to_send), 0, (struct sockaddr*) &servaddr, sizeof(servaddr));
 
-        ESP_LOGW(tag_udp, "Package sent . . .");
+        // ESP_LOGW(tag_udp, "Package sent . . .");
         // vTaskDelayUntil(xLastWakeTime, 10 / configTICK_RATE_HZ );
         vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+    // }
 
     shutdown(sockfd, 0);
     close(sockfd);

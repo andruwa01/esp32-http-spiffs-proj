@@ -14,5 +14,4 @@ void app_main(void)
     xTaskCreate(udp_task, "udp_task", 4096, NULL, 5, NULL);
 
     // wifi_ap_record_t wifi_info;
-
 }

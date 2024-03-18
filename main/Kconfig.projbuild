@@ -1,23 +1,27 @@
 menu "esp32s3 spiffs conf for storage satellite data"
-    config SERVER_IP
-        string "SERVER IPV4 Address"
-        default "..."
+    config PC_IP_WIFI
+        string "pc IPV4 address in wifi network"
+        default "172.20.10.11"
         help
-            SERVER IPV4 Adress.
-
-    config SERVER_PORT
-        int "Server Port"
+            PC IPV4 Adress in wi-fi network.
+    
+    config BOARD_IP_WIFI
+        string "board IPV4 address in wifi network"
+        default "172.20.10.9"
+    
+    config PC_PORT
+        int "Pc Port"
         range 0 65535
         default 3333
         help
-            The remote (server) port
+            The remote (pc) port
     
-    config CLIENT_PORT
-        int "Client Port"
+    config BOARD_PORT
+        int "Board Port"
         range 0 65535
         default 4444
         help
-            local (client) port
+            local (board) port
 
     config LED_GPIO
         int "LED GPIO number"
