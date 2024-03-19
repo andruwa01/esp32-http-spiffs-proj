@@ -446,4 +446,5 @@ void init_command_handler(){
 
         wait(1000);
     }
+    esp_get_free_heap_size()
 }
