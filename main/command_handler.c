@@ -105,7 +105,7 @@ static void clear_spiffs_file_by_params(char* file_name, const char* name_postfi
         clear_data_from_spiffs_file(file_path_buffer);
 }
 
-static void send_response_to_python(const char* sending_debug_info){
+static void send_response_to_pc(const char* sending_debug_info){
     wait(1000);
     uart_flush(UART_NUM_0);
 
@@ -135,7 +135,7 @@ void init_command_handler(){
 
 
         {
-            send_response_to_python(message_get_command); 
+            send_response_to_pc(message_get_command); 
 
             // give some time to python script for writing options file to uart (esle we got runtime exception)
             wait_until_python_process(1000);
@@ -154,7 +154,7 @@ void init_command_handler(){
                 if(strcmp(temp_data_buffer, "END FILES TRANSMISSION") == 0){
                     printf("%s\n", "END FILES TRANSMISSION RAISED!");
 
-                    send_response_to_python("stop iterating over file");
+                    send_response_to_pc("stop iterating over file");
                     break;
                 }
                 // clone the old buffer because when we use strtok - it changes input string
@@ -173,7 +173,7 @@ void init_command_handler(){
                         if(strcmp(data_line, "END_FILE") == 0){
                             // test
                             // read data from python finished
-                            send_response_to_python("send info that we finished read info about python");
+                            send_response_to_pc("send info that we finished read info about python");
                             // so we need to break loop of current file reading (to not add this line to spiffs) 
                             break;
                         }
@@ -216,7 +216,7 @@ void init_command_handler(){
             }
             clear_data_from_spiffs_file(spiffs_satellites_user_input_path);
             wait_response_from_python("wait signal from python that it finished handle data");
-            send_response_to_python(message_finish_command);
+            send_response_to_pc(message_finish_command);
         }
 
 
@@ -235,7 +235,7 @@ void init_command_handler(){
                 }
                 closedir(dptr);
             }
-            send_response_to_python("finish working with command");
+            send_response_to_pc("finish working with command");
         }
 
 
@@ -244,8 +244,8 @@ void init_command_handler(){
 
         {
             #if defined(SPIFFS_CLEAR_FILES)
-            send_response_to_python(message_get_command);
-            send_response_to_python("start waiting list of satellites");
+            send_response_to_pc(message_get_command);
+            send_response_to_pc("start waiting list of satellites");
             wait_response_from_python("python wrote list to buffer");
             // get data from uart to buffer 
             size_t buffer_size = 256;
@@ -271,7 +271,7 @@ void init_command_handler(){
                 data_line = strtok(NULL, "\n");
             }
             #endif
-            send_response_to_python(message_finish_command);
+            send_response_to_pc(message_finish_command);
         }
 
 
@@ -281,7 +281,7 @@ void init_command_handler(){
         {
             printf("%s command is realized\n", command_buffer);
 
-            send_response_to_python(message_get_command);
+            send_response_to_pc(message_get_command);
             wait_response_from_python("python starts reading data");
             // check spiffs
             ESP_ERROR_CHECK(esp_spiffs_check(SPIFFS_PARTITION_LABEL));
@@ -292,7 +292,7 @@ void init_command_handler(){
             ESP_LOGW(command_handler_tag, "\n%s", spiffs_data);
             // transmit this data to print in in python script 
             uart_write_bytes(UART_NUM_0, (void*)spiffs_data, strlen(spiffs_data));
-            send_response_to_python("signal that we finished writing first part of info");
+            send_response_to_pc("signal that we finished writing first part of info");
             // wait signal that we can write to python 
             wait_response_from_python("board can write files to python");
             // push information about all files in spiffs
@@ -321,7 +321,7 @@ void init_command_handler(){
             }
             uart_write_bytes(UART_NUM_0, spiffs_files_info, strlen(spiffs_files_info));
             wait_response_from_python("python finishes working with data");
-            send_response_to_python(message_finish_command);
+            send_response_to_pc(message_finish_command);
         }
 
 
@@ -331,7 +331,7 @@ void init_command_handler(){
         {
             printf("%s command is realized\n", command_buffer);
             // send signal to python that we got command
-            send_response_to_python(message_get_command);
+            send_response_to_pc(message_get_command);
             // continue only when python starts reading files
             wait_response_from_python("wait when python starts reading files");
             // get stats about spiffs
@@ -345,7 +345,7 @@ void init_command_handler(){
             // wait info from python that it finished reading data
             wait_response_from_python("finish reading data");
             // response to python that we ready to get files with data
-            send_response_to_python("ready to get files with data");
+            send_response_to_pc("ready to get files with data");
             // iterate over command files
             while(true){
                 // give 1 sec to avoid bug when while(true) works too fast and couses problems
@@ -357,7 +357,7 @@ void init_command_handler(){
                 if(strcmp(pass_buffer, "END FILES TRANSMISSION") == 0){
                     printf("%s\n", "END FILES TRANSMISSION RAISED!");
                     // so stop iterate over command files and send info about this in python 
-                    send_response_to_python("end files transmission");
+                    send_response_to_pc("end files transmission");
                     break;
                 }
                 // clone the old buffer because when we use strtok - it changes input string
@@ -416,9 +416,9 @@ void init_command_handler(){
                     uart_flush(UART_NUM_0);
                 }
                 // signal to python that we could read another file
-                send_response_to_python("we can read another file");
+                send_response_to_pc("we can read another file");
             }
-            send_response_to_python(message_finish_command);
+            send_response_to_pc(message_finish_command);
         }
 
 
@@ -427,13 +427,13 @@ void init_command_handler(){
 
         {
             printf("get command %s\n", command_buffer);
-            send_response_to_python(message_get_command);
+            send_response_to_pc(message_get_command);
             wait_response_from_python("wait data is sended");
             char file_buffer[128];
             get_data_from_uart(file_buffer, 128);
             printf("%s\n", file_buffer);
             // send info that we end working with this command
-            send_response_to_python(message_finish_command);
+            send_response_to_pc(message_finish_command);
         }
 
 

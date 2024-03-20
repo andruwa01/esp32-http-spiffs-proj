@@ -73,7 +73,7 @@ esp_err_t read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* 
     return ESP_OK;
 }
 
-void init_spiffs(void){
+void initialize_spiffs(void){
     ESP_LOGI(spiffs_tag, "Initializing spiffs");
 
     // Configurate structure for esp_vfs_spiffs_register

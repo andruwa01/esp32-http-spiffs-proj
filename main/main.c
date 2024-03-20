@@ -10,8 +10,8 @@ void app_main(void)
 
     initialize_nvs_flash();
     initialize_wifi();
-
-    xTaskCreate(udp_task, "udp_task", 4096, NULL, 5, NULL);
+    initialize_spiffs();
+    initialize_udp_tasks();
 
     // wifi_ap_record_t wifi_info;
 }

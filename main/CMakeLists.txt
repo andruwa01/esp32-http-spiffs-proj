@@ -11,6 +11,7 @@ idf_component_register(
          "wifi.c"
          "nvs.c"
          "udp.c"
+         "spiffs_storage.c"
 
     INCLUDE_DIRS "."
 
