@@ -1,6 +1,9 @@
 #ifndef UDP_H_
 #define UDP_H_
 
+#include "options.h"
+#include "spiffs_storage.h"
+
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
