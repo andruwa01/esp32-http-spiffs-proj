@@ -12,21 +12,22 @@
 #include <stdbool.h>
 #include <dirent.h>
 
-// Source headers
+// #include <cJSON.h>
+
+// // Source headers (заголовки для работы с udp отдельным проектом, ещё не завершены)
 #include "spiffs_storage.h"
 #include "nvs.h"
 #include "wifi.h"
 #include "udp.h"
 
 // #include "http_client.h"
-// #include "api_key.h" // key for request (to exclude from git)
-// #include <cJSON.h>
-// #include "uart.h"
+#include "api_key.h" // key for request (to exclude from git)
+#include "uart.h"
 // #include "button.h"
-// #include "freertos_handler.h"
-// #include "satellite_data_parser.h"
-// #include "time_converter.h"
-// #include "command_handler.h"
+#include "freertos_handler.h"
+#include "satellite_data_parser.h"
+#include "time_converter.h"
+#include "command_handler.h"
 
 // ESP-IDF headers
 // #include "freertos/FreeRTOS.h"

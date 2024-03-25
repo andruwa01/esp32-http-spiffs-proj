@@ -1,18 +1,17 @@
 idf_component_register(
     # esp32-uart-python command project configuration 
-    # SRCS "udp.c" "wifi.c" "main.c"
-    #      "command_handler.c"
-    #      "spiffs_storage.c"
-    #      "uart.c"
+    # SRCS "main.c"
+    #         "command_handler.c"
+    #         "spiffs_storage.c"
+    #         "uart.c"
     # INCLUDE_DIRS "."
 
     # Test udp (wifi-client)
-    SRCS "main.c"
-         "wifi.c"
-         "nvs.c"
-         "udp.c"
-         "spiffs_storage.c"
-
+    SRCS    "main.c"
+            "wifi.c"
+            "nvs.c"
+            "udp.c"
+            "spiffs_storage.c"
     INCLUDE_DIRS "."
 
     # EMBED_TXTFILES certificate.pem

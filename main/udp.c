@@ -11,7 +11,7 @@ const static char* name_postfix_response = "_response";
 const static char *tag_udp = "udp";
 const static char *tag_udp_test = "udp test"; // Логи с этой меткой можно впоследствии убрать (они чисто вспомогательные)
 
-const static char *event_udp_get_command = "get command from pc";
+const static char *event_board_get_command = "get command from pc";
 const static char *event_udp_finish_action = "finish working with action by command";
 
 const static char *response_send_udp = "response0"; 
@@ -21,6 +21,7 @@ const static char *response_receive_udp = "response1";
 
 const static char *command_template               = "commandx";
 const static char *command_send_spiffs_data_to_pc = "command0";
+const static char *command_send_pc_data_to_spiffs = "command1";
 
 
 // UDP sockets structs
@@ -30,6 +31,8 @@ socklen_t pc_wifi_addr_len = sizeof(pc_wifi_addr_receive);
 
 // const static size_t size_max_package = 5632;
 const static size_t size_max_request_options_file = 1256;
+
+
 
 // Переписать эту функцию в spiffs_storage.c
 static void create_spiffs_txt_file_path_by_params(const char *file_name, const char *name_postfix, char *buffer_to_save_path){
@@ -117,7 +120,7 @@ static void initialize_sockets(void){
 // }
 
 static void send_response_to_pc(const char *sending_event_info){
-    ESP_LOGW(tag_udp_test, "udp send event: %s", sending_event_info);
+    ESP_LOGW(tag_udp_test, "send event: %s", sending_event_info);
     size_t sent_bytes = 0;
     // sent_bytes = uart_write_bytes(UART_NUM_0, next_action_value, strlen(next_action_value));
     sent_bytes = sendto(sockfd, response_send_udp, strlen(response_send_udp), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
@@ -130,7 +133,7 @@ static void send_response_to_pc(const char *sending_event_info){
 }
 
 static void wait_response_from_pc(const char *waiting_event_info){
-    ESP_LOGW(tag_udp, "udp receive event: %s", waiting_event_info);
+    ESP_LOGW(tag_udp, "receive event: %s", waiting_event_info);
     char data_buffer[strlen(response_receive_udp)];
     size_t data_length = recvfrom(sockfd, data_buffer, sizeof(data_buffer), 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
     data_buffer[data_length] = '\0';
@@ -144,6 +147,64 @@ static void wait_response_from_pc(const char *waiting_event_info){
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
+}
+
+static int get_file_over_udp(char *data_buffer, size_t buffer_size){
+    wait_response_from_pc("wait signal from board that it starts sending file");
+
+    char first_line[16] = {'\0'}; 
+    size_t received_bytes = recvfrom(sockfd, first_line, 16, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+
+    if(received_bytes == -1){
+        ESP_LOGE(tag_udp, "can't get first line from udp");
+        return -1;
+    }
+
+    if(strcmp(first_line, "START_FILE") != 0){
+        ESP_LOGE(tag_udp, "no START_FILE mark in first line of file");
+        return -1;
+    }
+
+    size_t used_bytes = 0;
+    char data_line[128] = {'\0'};
+    while(strcmp(data_line, "END_FILE") != 0){
+        send_response_to_pc("ready to get new file");
+        size_t received_bytes = recvfrom(sockfd, data_line, 16, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);   
+        data_line[received_bytes] = '\0';
+        strcat(data_buffer, data_line);
+
+        used_bytes += received_bytes;
+    }
+
+    // size_t used_bytes = 0;
+    // char file_info[16] = {'\0'}; 
+    // size_t received_bytes = recvfrom(sockfd, file_info, 16, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+
+    // if(received_bytes == -1){
+    //     ESP_LOGE(tag_udp, "don't get any message");
+    // }
+
+    // file_info[received_bytes] = '\0';
+    // if(strcmp(file_info, "START_FILE") == 0){
+    //     char package_data_part[512] = {'\0'};
+    //     while((strcmp(package_data_part, "END_FILE") != 0)){
+    //         size_t received_bytes = recvfrom(sockfd, package_data_part, 512, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+    //         used_bytes += received_bytes;
+
+    //         if(buffer_size < used_bytes){
+    //             ESP_LOGE(tag_udp, "ERROR! package of size %i does not fit in buffer size %i", used_bytes, buffer_size);
+    //             return -1;
+    //         }
+
+    //         package_data_part[received_bytes] = '\0';
+    //         strcat(data_buffer, package_data_part);
+    //     }
+    // } else {
+    //     ESP_LOGE(tag_udp, "not start file");
+    //     return -1; 
+    // }
+
+    return used_bytes;
 }
 
 void task_udp_wait_command(void *xCommandGroup){
@@ -189,7 +250,7 @@ void task_udp_wait_command(void *xCommandGroup){
 
             {
                 // Ответить питону, что получили команду
-                send_response_to_pc(event_udp_get_command);
+                send_response_to_pc(event_board_get_command);
                 wait_response_from_pc("test wating 1");
                 // Действия над командой
                 ESP_LOGW(tag_udp, "action to test command!");
@@ -210,16 +271,20 @@ void task_udp_wait_command(void *xCommandGroup){
 
 
             {
-                send_response_to_pc(event_udp_get_command);
+                send_response_to_pc(event_board_get_command);
 
                 char request_options[size_max_request_options_file];
-
                 ESP_LOGW(tag_udp, "udp receive event: %s", "waiting request options file");
-                size_t data_length = recvfrom(sockfd, request_options, size_max_request_options_file, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
-                request_options[data_length] = '\0';
+                int data_length = get_file_over_udp(request_options, size_max_request_options_file);
+                if(data_length == -1){
+                    ESP_LOGE(tag_udp, "mistake in during file handling");
+                    break;
+                }
+                // size_t data_length = recvfrom(sockfd, request_options, size_max_request_options_file, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+                // request_options[data_length] = '\0';
                 ESP_LOGW(tag_udp, "get data package, content:\n====\n%s\n====", request_options);
 
-                char spiffs_request_options_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+                char spiffs_request_options_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                 char* first_line_in_file = strtok(request_options, "\n");
                 if(strcmp(first_line_in_file, "START_FILE") == 0){
                     create_spiffs_txt_file_path_by_params(name_options_file, (char*)name_postfix_command, spiffs_request_options_path);
@@ -241,7 +306,7 @@ void task_udp_wait_command(void *xCommandGroup){
                 ESP_LOGW(tag_udp_test, "options from spiffs:\n====\n%s\n====\n", request_options_spiffs_data);
 
                 // // general buffer string for package of all files that would be send
-                // char files_buffer[SPIFFS_MAX_FILES * RESPONSE_DATA_SIZE] = {'\0'};
+                // char files_buffer[SPIFFS_MAX_FILES * SIZE_RESPONSE_DATA_MAX] = {'\0'};
 
                 // // interate over file
                 // char* data_line_saveptr = NULL;
@@ -252,11 +317,11 @@ void task_udp_wait_command(void *xCommandGroup){
                 //     strtok_r(data_line, "=", &sat_saveptr);
                 //     char* sat_id = strtok_r(NULL, "=", &sat_saveptr);
                 //     // create file spiffs path for sat_name
-                //     char spiffs_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+                //     char spiffs_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                 //     create_spiffs_txt_file_path_by_params(sat_id, name_postfix_response, spiffs_path);
-                //     char response_buffer[RESPONSE_DATA_SIZE];
-                //     if(read_data_from_spiffs_file_to_buffer(spiffs_path, response_buffer, RESPONSE_DATA_SIZE) == ESP_OK){
-                //         char response_buffer_to_send[RESPONSE_DATA_SIZE] = {'\0'};
+                //     char response_buffer[SIZE_RESPONSE_DATA_MAX];
+                //     if(read_data_from_spiffs_file_to_buffer(spiffs_path, response_buffer, SIZE_RESPONSE_DATA_MAX) == ESP_OK){
+                //         char response_buffer_to_send[SIZE_RESPONSE_DATA_MAX] = {'\0'};
                 //         strcat(response_buffer_to_send, "START_FILE\n");
                 //         strcat(response_buffer_to_send, response_buffer);
                 //         strcat(response_buffer_to_send, "END_FILE\n");
@@ -266,9 +331,9 @@ void task_udp_wait_command(void *xCommandGroup){
                 //         // ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
                 //     }
                 //     create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_path);
-                //     char command_buffer[COMMAND_DATA_SIZE];
-                //     if(read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, COMMAND_DATA_SIZE) == ESP_OK){
-                //         char command_buffer_to_send[RESPONSE_DATA_SIZE] = {'\0'};
+                //     char command_buffer[SIZE_COMMAND_DATA_MAX];
+                //     if(read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, SIZE_COMMAND_DATA_MAX) == ESP_OK){
+                //         char command_buffer_to_send[SIZE_RESPONSE_DATA_MAX] = {'\0'};
                 //         strcat(command_buffer_to_send, "START_FILE\n");
                 //         strcat(command_buffer_to_send, command_buffer);
                 //         strcat(command_buffer_to_send, "END_FILE\n");
@@ -281,10 +346,108 @@ void task_udp_wait_command(void *xCommandGroup){
 
                 // // send all files over udp
                 // size_t sent_bytes = sendto(sockfd, files_buffer, strlen(files_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-                // ESP_LOGW(tag_udp_test, "message sent to port %i, size %i bytes", CONFIG_PC_PORT, sent_bytes);
+                // ESP_LOGW(tag_udp_test, "files data sent to port %i, size %i bytes", CONFIG_PC_PORT, sent_bytes);
 
                 // clear_data_from_spiffs_file(spiffs_request_options_path);
                 // wait_response_from_pc("python finished handle data");
+
+                xEventGroupSetBits(
+                    (EventGroupHandle_t)xCommandGroup,
+                    BIT_NEXT_COMMAND
+                );
+
+                send_response_to_pc(event_udp_finish_action);
+            }
+
+            else if(strcmp(command_buffer, command_send_pc_data_to_spiffs) == 0)
+            
+            {
+                send_response_to_pc(event_board_get_command);
+                wait_response_from_pc("python starts reading files");
+
+                // действия
+                // get stats about spiffs
+                size_t total = 0, used = 0;
+                esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
+                size_t free_space = total - used;
+                char free_space_buffer[strlen("free=") + 4 * sizeof(char) + sizeof("\n")];
+                sprintf(free_space_buffer, "free=%i\n", free_space);
+                // send free space information to python script
+                size_t sent_bytes = sendto(sockfd, free_space_buffer, strlen(free_space_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+                ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
+                wait_response_from_pc("finish reading data");
+                // response to python that we ready to get files with data
+                send_response_to_pc("ready to get files with data");
+
+                while(true){
+
+                    char file_buffer[SIZE_RESPONSE_DATA_MAX];
+                    size_t file_size = recvfrom(sockfd, file_buffer, SIZE_RESPONSE_DATA_MAX, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+                    file_buffer[file_size] = '\0'; 
+
+                    // wait_response_from_pc("test waiting data");
+                    // printf("%s\n", "waiting activated");
+
+                    ESP_LOGI(tag_udp_test, "data from pc: %s\n", file_buffer);
+
+                    char temp_data_buffer_for_getting_name[SIZE_RESPONSE_DATA_MAX] = {'\0'};
+                    strcpy(temp_data_buffer_for_getting_name, file_buffer);
+
+                    const char line_delimiter[] = "\n";
+                    const char req_data_delimiter[] = ": "; 
+                    const char param_data_delimiter[] = "=";
+
+                    char *line_saveptr = NULL;
+                    char *element_saveptr = NULL;
+                    // start parse file buffer (consists of data_line(s))
+                    char *first_line_in_file = strtok_r(temp_data_buffer_for_getting_name, line_delimiter, &line_saveptr);
+                    if(strcmp(first_line_in_file, "START_FILE") == 0){
+                        // choose right delmiiter (depends on command file or response file)
+                        char *data_line_with_id = strtok_r(NULL, line_delimiter, &line_saveptr);
+                        char old_line_with_id[strlen(data_line_with_id)];
+                        strcpy(old_line_with_id, data_line_with_id);
+                        char current_delimiter[strlen(req_data_delimiter) + 1];
+                        strcpy(current_delimiter, req_data_delimiter);
+                        char name_postfix[strlen(name_postfix_command) + strlen(name_postfix_response)];
+                        char *new_line_with_id = strtok_r(data_line_with_id, current_delimiter, &element_saveptr);
+                        ESP_LOGW(tag_udp_test, "test ptr: %s\n", new_line_with_id);
+                        // choose right delimiter
+                        // if 
+                        if(strcmp(new_line_with_id, old_line_with_id) == 0){
+                            // change delimiter to param
+                            strcpy(current_delimiter, param_data_delimiter);
+                            // skip element left from =
+                            strtok_r(new_line_with_id, current_delimiter, &element_saveptr);
+                            // change file postfix to param postfix
+                            strcpy(name_postfix, name_postfix_command);
+                        } else {
+                            // change file postfix to response postfix
+                            strcpy(name_postfix, name_postfix_response);
+                        }
+                        char *satellite_id = strtok_r(NULL, current_delimiter, &element_saveptr); 
+                        char spiffs_passes_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
+                        create_spiffs_txt_file_path_by_params(satellite_id, name_postfix, spiffs_passes_file_path);
+                        // clear spiffs file before writing to it (to override old file)
+                        clear_data_from_spiffs_file(spiffs_passes_file_path);
+                        // first data line is start file line so we need to skip it
+                        strtok(file_buffer, "\n");
+                        // first data line, to interate over it
+                        char* data_line = strtok(NULL, "\n");
+                        // Parse all lines and add them to spiffs
+                        while(data_line){
+                            if(strcmp(data_line, "END_FILE") == 0){
+                                // so we need to break loop of current file reading (to not add this line to spiffs) 
+                                break;
+                            }
+                            add_line_to_spiffs(spiffs_passes_file_path, data_line);
+                            data_line = strtok(NULL, "\n");
+                        }
+                    } else {
+                        ESP_LOGE(tag_udp, "ERROR! file does not have right format");
+                    }
+                    send_response_to_pc("board can read another file");
+                }
+                // конец действий
 
                 xEventGroupSetBits(
                     (EventGroupHandle_t)xCommandGroup,
@@ -316,7 +479,7 @@ void initialize_udp_tasks(void){
     xReturned = xTaskCreate(
         task_udp_wait_command, 
         "task_udp_wait_command", 
-        4096, 
+        4096 * 50, 
         (void*)xCommandGroup, 
         5, 
         &xCommandHandle

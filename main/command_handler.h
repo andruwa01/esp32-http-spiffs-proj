@@ -1,3 +1,3 @@
 #include "main.h"
 
-void init_command_handler(void);
+void initialize_command_handler(void);

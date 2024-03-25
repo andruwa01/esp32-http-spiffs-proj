@@ -4,7 +4,7 @@ const static char* tag_http_client = "http_client";
 
 //==========GET request data NORBI===============//
 // static int id = 46494;
-const static char temp_file_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+const static char temp_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
 const static float observer_lat = 51.671667;
 const static float observer_lng = 39.210556;
 const static float observer_alt = 99;

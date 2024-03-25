@@ -100,7 +100,7 @@ static void clear_spiffs_file_by_params(char* file_name, const char* name_postfi
         if(!file_name || !name_postfix){
             ESP_LOGE(command_handler_tag, "file_name or name_postfix is null. Working impossible");
         }
-        char file_path_buffer[SPIFFS_MAX_FILE_NAME_LENGTH];
+        char file_path_buffer[SPIFFS_FILE_NAME_LENGTH_MAX];
         create_spiffs_txt_file_path_by_params(file_name, name_postfix, file_path_buffer);
         clear_data_from_spiffs_file(file_path_buffer);
 }
@@ -118,7 +118,7 @@ static void send_response_to_pc(const char* sending_debug_info){
     wait(1000);
 }
 
-void init_command_handler(){
+void initialize_command_handler(){
     if(!uart_is_driver_installed(UART_NUM_0)){
         ESP_LOGE(command_handler_tag, "ERROR! uart driver is not installed");
         return;
@@ -141,7 +141,7 @@ void init_command_handler(){
             wait_until_python_process(1000);
             // TODO переписать код выше на wait/send
             char options_file_name[] = "input_options"; 
-            char spiffs_satellites_user_input_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+            char spiffs_satellites_user_input_path[SPIFFS_FILE_NAME_LENGTH_MAX];
             // read file with options
             while(true){
                 // test delay wait time for python script
@@ -196,18 +196,18 @@ void init_command_handler(){
                 strtok_r(data_line, "=", &sat_saveptr);
                 char* sat_id = strtok_r(NULL, "=", &sat_saveptr);
                 // create file spiffs path for sat_name
-                char spiffs_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+                char spiffs_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                 create_spiffs_txt_file_path_by_params(sat_id, name_postfix_response, spiffs_path);
-                char response_buffer[RESPONSE_DATA_SIZE];
-                if(read_data_from_spiffs_file_to_buffer(spiffs_path, response_buffer, RESPONSE_DATA_SIZE) == ESP_OK){
+                char response_buffer[SIZE_RESPONSE_DATA_MAX];
+                if(read_data_from_spiffs_file_to_buffer(spiffs_path, response_buffer, SIZE_RESPONSE_DATA_MAX) == ESP_OK){
                     strcat(response_buffer, "END_OF_THE_FILE\n");
                     // send sat data to uart to python script get it
                     int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&response_buffer, strlen(response_buffer));
                     ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
                 }
                 create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_path);
-                char command_buffer[COMMAND_DATA_SIZE];
-                if(read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, COMMAND_DATA_SIZE) == ESP_OK){
+                char command_buffer[SIZE_COMMAND_DATA_MAX];
+                if(read_data_from_spiffs_file_to_buffer(spiffs_path, command_buffer, SIZE_COMMAND_DATA_MAX) == ESP_OK){
                     strcat(command_buffer, "END_OF_THE_FILE\n");
                     int command_bytes = uart_write_bytes(UART_NUM_0, (const char*)&command_buffer, strlen(command_buffer));
                     ESP_LOGW(command_handler_tag, "%i bytes were sended", command_bytes);
@@ -229,7 +229,7 @@ void init_command_handler(){
             dptr = opendir(SPIFFS_BASE_PATH);
             if(dptr){
                 while((dir = readdir(dptr)) != NULL){
-                    char file_path[SPIFFS_MAX_FILE_NAME_LENGTH + strlen("/") + strlen(dir->d_name)];
+                    char file_path[SPIFFS_FILE_NAME_LENGTH_MAX + strlen("/") + strlen(dir->d_name)];
                     sprintf(file_path, "%s/%s", SPIFFS_BASE_PATH, dir->d_name);
                     clear_data_from_spiffs_file(file_path);
                 }
@@ -297,7 +297,7 @@ void init_command_handler(){
             wait_response_from_python("board can write files to python");
             // push information about all files in spiffs
             // initialize empty string
-            char spiffs_files_info[2 * SPIFFS_MAX_FILES * (SPIFFS_MAX_FILE_NAME_LENGTH + strlen(": ") + 4 * sizeof(char))];
+            char spiffs_files_info[2 * SPIFFS_MAX_FILES * (SPIFFS_FILE_NAME_LENGTH_MAX + strlen(": ") + 4 * sizeof(char))];
             spiffs_files_info[0] = '\0';
 
             DIR* dptr;
@@ -305,7 +305,7 @@ void init_command_handler(){
             dptr = opendir(SPIFFS_BASE_PATH);
             if(dptr){
                 while((dir = readdir(dptr)) != NULL){
-                    char file_path[SPIFFS_MAX_FILE_NAME_LENGTH + strlen("/") + strlen(dir->d_name)];
+                    char file_path[SPIFFS_FILE_NAME_LENGTH_MAX + strlen("/") + strlen(dir->d_name)];
                     sprintf(file_path, "%s/%s", SPIFFS_BASE_PATH, dir->d_name);
                     // get the size of one file
                     size_t size_of_file;
@@ -350,8 +350,8 @@ void init_command_handler(){
             while(true){
                 // give 1 sec to avoid bug when while(true) works too fast and couses problems
                 wait(1000);
-                char pass_buffer[RESPONSE_DATA_SIZE];
-                get_data_from_uart(pass_buffer, RESPONSE_DATA_SIZE);
+                char pass_buffer[SIZE_RESPONSE_DATA_MAX];
+                get_data_from_uart(pass_buffer, SIZE_RESPONSE_DATA_MAX);
                 // test print
                 ESP_LOGI(command_handler_tag, "\n%s", pass_buffer);
                 if(strcmp(pass_buffer, "END FILES TRANSMISSION") == 0){
@@ -395,7 +395,7 @@ void init_command_handler(){
                         strcpy(name_postfix, name_postfix_response);
                     }
                     char* satellite_id = strtok_r(NULL, current_delimiter, &element_saveptr); 
-                    char spiffs_passes_file_path[SPIFFS_MAX_FILE_NAME_LENGTH];
+                    char spiffs_passes_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                     create_spiffs_txt_file_path_by_params(satellite_id, name_postfix, spiffs_passes_file_path);
                     // clear spiffs file before writing to it (to override old file)
                     clear_data_from_spiffs_file(spiffs_passes_file_path);
@@ -446,5 +446,4 @@ void init_command_handler(){
 
         wait(1000);
     }
-    esp_get_free_heap_size()
 }

@@ -18,7 +18,7 @@ void uart_send_test_message(void){
     ESP_LOGW(uart_tag, "%i bytes was sended", sended_bytes);
 }
 
-void init_uart(void){
+void initialize_uart(void){
     uart_config_t uart_config = {
         .baud_rate = UART_BAUD_RATE,
         .data_bits = UART_DATA_8_BITS,

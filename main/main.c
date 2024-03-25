@@ -8,10 +8,16 @@ void app_main(void)
         ESP_LOGE(tag_main, "ERROR: SPIFFS_NUMBER_OF_FILES is more than SPIFFS_MAX_FILES: CHANGE IT IN options.h");
     }
 
+    #if defined(HANDLE_UART)
+    initialize_uart();
+    initialize_spiffs();
+    initialize_command_handler();
+    #endif
+
+    #if defined(HANDLE_UDP)
+    initialize_spiffs();
     initialize_nvs_flash();
     initialize_wifi();
-    initialize_spiffs();
     initialize_udp_tasks();
-
-    // wifi_ap_record_t wifi_info;
+    #endif
 }
