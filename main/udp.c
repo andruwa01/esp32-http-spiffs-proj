@@ -18,10 +18,12 @@ const static char *response_send_udp = "response0";
 const static char *response_receive_udp = "response1";
 
 #define BIT_NEXT_COMMAND BIT0
+// #define BIT_STOP_WAITING_FILES BIT1
 
 const static char *command_template               = "commandx";
 const static char *command_send_spiffs_data_to_pc = "command0";
 const static char *command_send_pc_data_to_spiffs = "command1";
+// const static char *command_stop_waiting_files     = "command2";
 
 
 // UDP sockets structs
@@ -58,8 +60,8 @@ static void initialize_sockets(void){
     }
 
     memset(&board_wifi_addr_receive, 0, sizeof(board_wifi_addr_receive));
-    memset(&pc_wifi_addr_receive, 0, sizeof(pc_wifi_addr_receive));
-    memset(&pc_wifi_addr_send, 0, sizeof(pc_wifi_addr_send));
+    memset(&pc_wifi_addr_receive,    0, sizeof(pc_wifi_addr_receive));
+    memset(&pc_wifi_addr_send,       0, sizeof(pc_wifi_addr_send));
 
     // board info
     board_wifi_addr_receive.sin_family = AF_INET; // ipv4
@@ -137,7 +139,7 @@ static void wait_response_from_pc(const char *waiting_event_info){
     char data_buffer[strlen(response_receive_udp) + 1];
     while(strcmp(data_buffer, response_receive_udp) != 0){
         ESP_LOGW(tag_udp, "udp receive event: %s", waiting_event_info);
-        size_t data_length = recvfrom(sockfd, data_buffer, sizeof(data_buffer), 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+        int data_length = recvfrom(sockfd, data_buffer, sizeof(data_buffer), 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
         data_buffer[data_length] = '\0';
         ESP_LOGW(tag_udp, "get data: %s\n", data_buffer);
 
@@ -146,15 +148,15 @@ static void wait_response_from_pc(const char *waiting_event_info){
 }
 
 static int get_file_over_udp(char *data_buffer, size_t buffer_size){
-    wait_response_from_pc("wait signal from board that it starts sending file");
+    wait_response_from_pc("wait signal from board that it ready to send file");
 
     char start_file_buffer[strlen("START_FILE") + 1]; 
     while(strcmp(start_file_buffer, "START_FILE") != 0){
-        size_t received_bytes = recvfrom(sockfd, start_file_buffer, sizeof(start_file_buffer) - 1, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
-        start_file_buffer[received_bytes] = '\0';
+        int start_file_bytes = recvfrom(sockfd, start_file_buffer, sizeof(start_file_buffer) - 1, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+        start_file_buffer[start_file_bytes] = '\0';
         // printf("start file buffer: %s\n", start_file_buffer);
-        if(received_bytes == -1){
-            ESP_LOGW(tag_udp, "this is not first line of udp file");
+        if(start_file_bytes == -1){
+            ESP_LOGE(tag_udp, "this is not first line of udp file");
         }
         // vTaskDelay(pdMS_TO_TICKS(1000));
     }
@@ -162,7 +164,7 @@ static int get_file_over_udp(char *data_buffer, size_t buffer_size){
     ESP_LOGW(tag_udp_test, "get START_FILE");
     send_response_to_pc("board get file");
     
-    char data_chunk[512];
+    char data_chunk[1024];
     size_t used_bytes = 0;
     while(true){
         size_t received_bytes = recvfrom(sockfd, data_chunk, sizeof(data_chunk) - 1, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);   
@@ -182,6 +184,15 @@ static int get_file_over_udp(char *data_buffer, size_t buffer_size){
         send_response_to_pc("ready to get new chunk");
     }
 
+    // char file_context_signal[16];
+    // while(strcmp(file_context_signal, "FILE_CONTEXT") != 0){
+    //     int received_bytes = recvfrom(sockfd, file_context_signal, sizeof(file_context_signal) - 1, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+    //     file_context_signal[received_bytes] = '\0';
+    //     if(received_bytes == -1){
+    //         ESP_LOGE(tag_udp, "this is not FILE_CONTEXT info");
+    //     }
+    // }
+    ESP_LOGI(tag_udp_test, "finish file handle");
     return used_bytes;
 }
 
@@ -351,79 +362,102 @@ void task_udp_wait_command(void *xCommandGroup){
 
                 while(true){
 
+                    char loop_signal[16];
+                    size_t message_length = recvfrom(sockfd, loop_signal, sizeof(loop_signal) - 1, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+                    loop_signal[message_length] = '\0'; 
+                    if(strcmp(loop_signal, "BREAK") == 0){
+                        ESP_LOGW(tag_udp_test, "loop signal: %s", loop_signal);
+                        send_response_to_pc("finish working with files");
+                        break;
+                    } else if(strcmp(loop_signal, "CONTINUE") == 0){
+                        ESP_LOGW(tag_udp_test, "loop signal: %s", loop_signal);
+                    } else {
+                        ESP_LOGE(tag_udp, "ERROR! wrong signal to file handling loop");
+                        break;
+                    }
+
+                    // TODO delete if comment
+                    // send_response_to_pc("pc can load next file");
+
                     char file_buffer[SIZE_RESPONSE_DATA_MAX];
-                    // size_t file_size = recvfrom(sockfd, file_buffer, SIZE_RESPONSE_DATA_MAX, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
-                    // file_buffer[file_size] = '\0'; 
+                    memset(file_buffer, '\0', sizeof(file_buffer));
+                    
                     int file_size = get_file_over_udp(file_buffer, SIZE_RESPONSE_DATA_MAX);
                     if(file_size == 0){
                         ESP_LOGE(tag_udp, "some error raised");
                         break;
                     }
 
+                    // TODO delete if comment
                     // wait_response_from_pc("test waiting data");
                     // printf("%s\n", "waiting activated");
 
                     printf("data from pc:\n====\n%s\n====\n", file_buffer);
 
-                    // char temp_data_buffer_for_getting_name[SIZE_RESPONSE_DATA_MAX] = {'\0'};
-                    // strcpy(temp_data_buffer_for_getting_name, file_buffer);
+                    char temp_data_buffer_for_getting_name[SIZE_RESPONSE_DATA_MAX];
+                    strcpy(temp_data_buffer_for_getting_name, file_buffer);
 
-                    // const char line_delimiter[] = "\n";
-                    // const char req_data_delimiter[] = ": "; 
-                    // const char param_data_delimiter[] = "=";
+                    const char line_delimiter[] = "\n";
+                    const char req_data_delimiter[] = ": "; 
+                    const char param_data_delimiter[] = "=";
 
-                    // char *line_saveptr = NULL;
-                    // char *element_saveptr = NULL;
-                    // // start parse file buffer (consists of data_line(s))
+                    char *line_saveptr = NULL;
+                    char *element_saveptr = NULL;
+                    // start parse file buffer (consists of data_line(s))
+
                     // char *first_line_in_file = strtok_r(temp_data_buffer_for_getting_name, line_delimiter, &line_saveptr);
                     // if(strcmp(first_line_in_file, "START_FILE") == 0){
-                    //     // choose right delmiiter (depends on command file or response file)
-                    //     char *data_line_with_id = strtok_r(NULL, line_delimiter, &line_saveptr);
-                    //     char old_line_with_id[strlen(data_line_with_id)];
-                    //     strcpy(old_line_with_id, data_line_with_id);
-                    //     char current_delimiter[strlen(req_data_delimiter) + 1];
-                    //     strcpy(current_delimiter, req_data_delimiter);
-                    //     char name_postfix[strlen(name_postfix_command) + strlen(name_postfix_response)];
-                    //     char *new_line_with_id = strtok_r(data_line_with_id, current_delimiter, &element_saveptr);
-                    //     ESP_LOGW(tag_udp_test, "test ptr: %s\n", new_line_with_id);
-                    //     // choose right delimiter
-                    //     // if 
-                    //     if(strcmp(new_line_with_id, old_line_with_id) == 0){
-                    //         // change delimiter to param
-                    //         strcpy(current_delimiter, param_data_delimiter);
-                    //         // skip element left from =
-                    //         strtok_r(new_line_with_id, current_delimiter, &element_saveptr);
-                    //         // change file postfix to param postfix
-                    //         strcpy(name_postfix, name_postfix_command);
-                    //     } else {
-                    //         // change file postfix to response postfix
-                    //         strcpy(name_postfix, name_postfix_response);
-                    //     }
-                    //     char *satellite_id = strtok_r(NULL, current_delimiter, &element_saveptr); 
-                    //     char spiffs_passes_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
-                    //     create_spiffs_txt_file_path_by_params(satellite_id, name_postfix, spiffs_passes_file_path);
-                    //     // clear spiffs file before writing to it (to override old file)
-                    //     clear_data_from_spiffs_file(spiffs_passes_file_path);
-                    //     // first data line is start file line so we need to skip it
-                    //     strtok(file_buffer, "\n");
-                    //     // first data line, to interate over it
-                    //     char* data_line = strtok(NULL, "\n");
-                    //     // Parse all lines and add them to spiffs
-                    //     while(data_line){
-                    //         if(strcmp(data_line, "END_FILE") == 0){
-                    //             // so we need to break loop of current file reading (to not add this line to spiffs) 
-                    //             break;
-                    //         }
-                    //         add_line_to_spiffs(spiffs_passes_file_path, data_line);
-                    //         data_line = strtok(NULL, "\n");
-                    //     }
+
+                    // choose right delmiiter (depends on command file or response file)
+                    char *data_line_with_id = strtok_r(temp_data_buffer_for_getting_name, line_delimiter, &line_saveptr);
+                    char old_line_with_id[strlen(data_line_with_id)];
+                    strcpy(old_line_with_id, data_line_with_id);
+                    char current_delimiter[strlen(req_data_delimiter) + 1];
+                    strcpy(current_delimiter, req_data_delimiter);
+                    char name_postfix[strlen(name_postfix_command) + strlen(name_postfix_response)];
+                    char *new_line_with_id = strtok_r(data_line_with_id, current_delimiter, &element_saveptr);
+                    ESP_LOGW(tag_udp_test, "test ptr: %s\n", new_line_with_id);
+                    // choose right delimiter
+                    // if 
+                    if(strcmp(new_line_with_id, old_line_with_id) == 0){
+                        // change delimiter to param
+                        strcpy(current_delimiter, param_data_delimiter);
+                        // skip element left from =
+                        strtok_r(new_line_with_id, current_delimiter, &element_saveptr);
+                        // change file postfix to param postfix
+                        strcpy(name_postfix, name_postfix_command);
+                    } else {
+                        // change file postfix to response postfix
+                        strcpy(name_postfix, name_postfix_response);
+                    }
+                    char *satellite_id = strtok_r(NULL, current_delimiter, &element_saveptr); 
+                    char spiffs_passes_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
+                    create_spiffs_txt_file_path_by_params(satellite_id, name_postfix, spiffs_passes_file_path);
+                    // clear spiffs file before writing to it (to override old file)
+                    clear_data_from_spiffs_file(spiffs_passes_file_path);
+                    // first data line is start file line so we need to skip it
+                    // strtok(file_buffer, "\n");
+                    // first data line, to interate over it
+                    char* data_line = strtok(file_buffer, "\n");
+                    // Parse all lines and add them to spiffs
+                    while(data_line){
+
+                        // if(strcmp(data_line, "END_FILE") == 0){
+                        //     // so we need to break loop of current file reading (to not add this line to spiffs) 
+                        //     break;
+                        // }
+
+                        add_line_to_spiffs(spiffs_passes_file_path, data_line);
+                        data_line = strtok(NULL, "\n");
+                    }
+
                     // } else {
                     //     ESP_LOGE(tag_udp, "ERROR! file does not have right format");
                     // }
+
                     send_response_to_pc("board can read another file");
                 }
                 // конец действий
-
                 xEventGroupSetBits(
                     (EventGroupHandle_t)xCommandGroup,
                     BIT_NEXT_COMMAND
