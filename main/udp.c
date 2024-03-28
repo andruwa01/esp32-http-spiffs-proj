@@ -150,7 +150,12 @@ static void wait_response_from_pc(const char *waiting_event_info){
     }
 }
 
-static int get_file_over_udp(char *data_buffer, size_t buffer_size){
+static int get_file_over_udp(char *empty_data_buffer, size_t buffer_size){
+    if(empty_data_buffer[0] != '\0'){
+        ESP_LOGE(tag_udp, "ERROR! This data buffer will be updated, so you need to make it full empty with first char null-terminated");
+        return -1;
+    }
+
     wait_response_from_pc("wait signal from board that it ready to send file");
 
     char start_file_buffer[strlen("START_FILE") + 1]; 
@@ -177,7 +182,7 @@ static int get_file_over_udp(char *data_buffer, size_t buffer_size){
             break;
         }
         // printf("received chunk:\n====\n%s\n====\n", data_chunk);
-        strcat(data_buffer, data_chunk);
+        strcat(empty_data_buffer, data_chunk);
 
         used_bytes += received_bytes;
         if(buffer_size < used_bytes){
@@ -200,14 +205,6 @@ static int get_file_over_udp(char *data_buffer, size_t buffer_size){
 }
 
 void task_udp_wait_command(void *xCommandGroup){
-    // Ожидать команду (пока не получит командный буфер длиной 128 байт).
-    // Принять команду, остановить получение новых команд.
-    // В зависимости от принятой команды - отправить её в обработчик команд (через очередь) ИЛИ выставлятся
-    // определённое события в группе событий, отвечающих за команды. 
-    // В обработчике команд в зависимости от события - будет отрабатываться отпределённое действие, каждое в своём task. 
-    // Возобновить ожидания команд как только получит сигнал о том, что задача отработала своё.
-
-    // EventGroupHandle_t xCommandGroup = (EventGroupHandle_t)xCommandGroup;
 
     // Отправляем сигнал task_udp_wait_command, чтобы она начала считывать первую команду
     xEventGroupSetBits(
