@@ -141,6 +141,9 @@ static void wait_response_from_pc(const char *waiting_event_info){
         ESP_LOGW(tag_udp, "udp receive event: %s", waiting_event_info);
         int data_length = recvfrom(sockfd, data_buffer, sizeof(data_buffer), 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
         data_buffer[data_length] = '\0';
+        if(data_length == -1){
+            ESP_LOGE(tag_udp, "ERROR! this is not response from pc");
+        }
         ESP_LOGW(tag_udp, "get data: %s\n", data_buffer);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
