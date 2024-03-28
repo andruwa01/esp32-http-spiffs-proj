@@ -349,7 +349,6 @@ void task_udp_wait_command(void *xCommandGroup){
                 send_response_to_pc(event_board_get_command);
                 wait_response_from_pc("python starts reading files");
 
-                // действия
                 // get stats about spiffs
                 size_t total = 0, used = 0;
                 esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
@@ -379,9 +378,6 @@ void task_udp_wait_command(void *xCommandGroup){
                         break;
                     }
 
-                    // TODO delete if comment
-                    // send_response_to_pc("pc can load next file");
-
                     char file_buffer[SIZE_RESPONSE_DATA_MAX];
                     memset(file_buffer, '\0', sizeof(file_buffer));
                     
@@ -390,10 +386,6 @@ void task_udp_wait_command(void *xCommandGroup){
                         ESP_LOGE(tag_udp, "some error raised");
                         break;
                     }
-
-                    // TODO delete if comment
-                    // wait_response_from_pc("test waiting data");
-                    // printf("%s\n", "waiting activated");
 
                     printf("data from pc:\n====\n%s\n====\n", file_buffer);
 
@@ -407,11 +399,8 @@ void task_udp_wait_command(void *xCommandGroup){
                     char *line_saveptr = NULL;
                     char *element_saveptr = NULL;
                     // start parse file buffer (consists of data_line(s))
-
-                    // char *first_line_in_file = strtok_r(temp_data_buffer_for_getting_name, line_delimiter, &line_saveptr);
-                    // if(strcmp(first_line_in_file, "START_FILE") == 0){
-
                     // choose right delmiiter (depends on command file or response file)
+                    // get data line with id (first iteration of parsing)
                     char *data_line_with_id = strtok_r(temp_data_buffer_for_getting_name, line_delimiter, &line_saveptr);
                     char old_line_with_id[strlen(data_line_with_id)];
                     strcpy(old_line_with_id, data_line_with_id);
@@ -438,25 +427,13 @@ void task_udp_wait_command(void *xCommandGroup){
                     create_spiffs_txt_file_path_by_params(satellite_id, name_postfix, spiffs_passes_file_path);
                     // clear spiffs file before writing to it (to override old file)
                     clear_data_from_spiffs_file(spiffs_passes_file_path);
-                    // first data line is start file line so we need to skip it
-                    // strtok(file_buffer, "\n");
                     // first data line, to interate over it
                     char* data_line = strtok(file_buffer, "\n");
                     // Parse all lines and add them to spiffs
                     while(data_line){
-
-                        // if(strcmp(data_line, "END_FILE") == 0){
-                        //     // so we need to break loop of current file reading (to not add this line to spiffs) 
-                        //     break;
-                        // }
-
                         add_line_to_spiffs(spiffs_passes_file_path, data_line);
                         data_line = strtok(NULL, "\n");
                     }
-
-                    // } else {
-                    //     ESP_LOGE(tag_udp, "ERROR! file does not have right format");
-                    // }
 
                     send_response_to_pc("board can read another file");
                 }
