@@ -45,7 +45,7 @@ void clear_data_from_spiffs_file(char* path_to_spiffs_file){
 }
 
 // void read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size){
-esp_err_t read_data_from_spiffs_file_to_buffer(char* path_to_spiffs_file, char* buffer_to_save_data, int buffer_size){
+esp_err_t read_data_from_spiffs_file_to_buffer(const char *path_to_spiffs_file, char buffer_to_save_data[], int buffer_size){
     ESP_LOGI(spiffs_tag, "reading file: %s", path_to_spiffs_file);
 
     FILE* fpr = fopen(path_to_spiffs_file, "r"); 
