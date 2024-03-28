@@ -5,7 +5,7 @@
 const static char *text_file_extension = ".txt";
 const static char *name_options_file = "input_options"; 
 const static char *name_postfix_command = "_command";
-const static char* name_postfix_response = "_response";
+const static char *name_postfix_response = "_response";
 // =======================================================
 
 const static char *tag_udp = "udp";
@@ -25,6 +25,9 @@ const static char *command_send_spiffs_data_to_pc = "command0";
 const static char *command_send_pc_data_to_spiffs = "command1";
 // const static char *command_stop_waiting_files     = "command2";
 
+const static char *new_line_delimiter   = "\n";
+const static char *req_data_delimiter   = ": "; 
+const static char *param_data_delimiter = "=";
 
 // UDP sockets structs
 int sockfd;
@@ -150,7 +153,12 @@ static void wait_response_from_pc(const char *waiting_event_info){
     }
 }
 
-static int get_file_over_udp(char *empty_data_buffer, size_t buffer_size){
+// static int send_file_over_udp(const char *spiffs_file_path){
+//     char file_buffer[SIZE_RESPONSE_DATA_MAX];
+//     read_data_from_spiffs_file_to_buffer(spiffs_file_path, file_buffer, SIZE_COMMAND_DATA_MAX);
+// }
+
+static int receive_file_over_udp(char *empty_data_buffer, size_t buffer_size){
     if(empty_data_buffer[0] != '\0'){
         ESP_LOGE(tag_udp, "ERROR! This data buffer will be updated, so you need to make it full empty with first char null-terminated");
         return -1;
@@ -265,7 +273,7 @@ void task_udp_wait_command(void *xCommandGroup){
                 char request_options[SIZE_OPTIONS_FILE_MAX];
                 memset(request_options, '\0', sizeof(request_options));
                 ESP_LOGW(tag_udp, "udp receive event: %s", "waiting request options file");
-                int data_length = get_file_over_udp(request_options, SIZE_OPTIONS_FILE_MAX);
+                int data_length = receive_file_over_udp(request_options, SIZE_OPTIONS_FILE_MAX);
                 if(data_length == -1){
                     ESP_LOGE(tag_udp, "mistake during file handling");
                     break;
@@ -276,10 +284,10 @@ void task_udp_wait_command(void *xCommandGroup){
 
                 char spiffs_request_options_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                 create_spiffs_txt_file_path_by_params(name_options_file, (char*)name_postfix_command, spiffs_request_options_path);
-                char* data_line = strtok(request_options, "\n");
-                while(data_line){
-                    add_line_to_spiffs(spiffs_request_options_path, data_line);
-                    data_line = strtok(NULL, "\n");
+                char* data_line_options_file = strtok(request_options, "\n");
+                while(data_line_options_file){
+                    add_line_to_spiffs(spiffs_request_options_path, data_line_options_file);
+                    data_line_options_file = strtok(NULL, "\n");
                 }
 
                 char request_options_spiffs_data[data_length];
@@ -289,13 +297,13 @@ void task_udp_wait_command(void *xCommandGroup){
                 // // general buffer string for package of all files that would be send
                 // char files_buffer[SPIFFS_MAX_FILES * SIZE_RESPONSE_DATA_MAX] = {'\0'};
 
-                // // interate over file
-                // char* data_line_saveptr = NULL;
-                // char* sat_saveptr = NULL;
-                // char* data_line = strtok_r(request_options_spiffs_data, "\n", &data_line_saveptr);
+                // interate over file
+                char* data_line_saveptr = NULL;
+                char* sat_saveptr = NULL;
+                char* data_line = strtok_r(request_options_spiffs_data, new_line_delimiter, &data_line_saveptr);
                 // while(data_line){
-                //     // skip sat_name and get to sat_id
-                //     strtok_r(data_line, "=", &sat_saveptr);
+                    // skip sat_name and get to sat_id
+                    // strtok_r(data_line, "=", &sat_saveptr);
                 //     char* sat_id = strtok_r(NULL, "=", &sat_saveptr);
                 //     // create file spiffs path for sat_name
                 //     char spiffs_path[SPIFFS_FILE_NAME_LENGTH_MAX];
@@ -378,7 +386,7 @@ void task_udp_wait_command(void *xCommandGroup){
                     char file_buffer[SIZE_RESPONSE_DATA_MAX];
                     memset(file_buffer, '\0', sizeof(file_buffer));
                     
-                    int file_size = get_file_over_udp(file_buffer, SIZE_RESPONSE_DATA_MAX);
+                    int file_size = receive_file_over_udp(file_buffer, SIZE_RESPONSE_DATA_MAX);
                     if(file_size == 0){
                         ESP_LOGE(tag_udp, "some error raised");
                         break;
@@ -389,16 +397,12 @@ void task_udp_wait_command(void *xCommandGroup){
                     char temp_data_buffer_for_getting_name[SIZE_RESPONSE_DATA_MAX];
                     strcpy(temp_data_buffer_for_getting_name, file_buffer);
 
-                    const char line_delimiter[] = "\n";
-                    const char req_data_delimiter[] = ": "; 
-                    const char param_data_delimiter[] = "=";
-
                     char *line_saveptr = NULL;
                     char *element_saveptr = NULL;
                     // start parse file buffer (consists of data_line(s))
                     // choose right delmiiter (depends on command file or response file)
                     // get data line with id (first iteration of parsing)
-                    char *data_line_with_id = strtok_r(temp_data_buffer_for_getting_name, line_delimiter, &line_saveptr);
+                    char *data_line_with_id = strtok_r(temp_data_buffer_for_getting_name, new_line_delimiter, &line_saveptr);
                     char old_line_with_id[strlen(data_line_with_id)];
                     strcpy(old_line_with_id, data_line_with_id);
                     char current_delimiter[strlen(req_data_delimiter) + 1];
