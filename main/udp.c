@@ -345,35 +345,47 @@ void task_udp_wait_command(void *xCommandGroup){
                 send_response_to_pc("board finished managing options file");
 
                 // interate over file
-                char* data_line_saveptr = NULL;
-                char* sat_saveptr = NULL;
-                char* data_line = strtok_r(request_options_spiffs_data, new_line_delimiter, &data_line_saveptr);
+                char *data_line_saveptr = NULL;
+                char *sat_saveptr = NULL;
+                char *data_line = strtok_r(request_options_spiffs_data, new_line_delimiter, &data_line_saveptr);
                 while(data_line){
                     // skip sat_name and get to sat_id
                     strtok_r(data_line, param_data_delimiter, &sat_saveptr);
-                    char* sat_id = strtok_r(NULL, param_data_delimiter, &sat_saveptr);
+                    char *sat_id = strtok_r(NULL, param_data_delimiter, &sat_saveptr);
                     // create file spiffs path for sat_name
                     char spiffs_response_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                     create_spiffs_txt_file_path_by_params(sat_id, name_postfix_response, spiffs_response_file_path);
-                    if(fopen(spiffs_response_file_path, "r") != NULL){
+                    FILE *response_file_ptr = fopen(spiffs_response_file_path, "r");
+                    if(response_file_ptr != NULL){
+                        fclose(response_file_ptr);
                         // send singal CONTINUE to reading files loop
                         sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
                         ESP_LOGI(tag_udp_test, "CONTINUE sent");
                         send_file_over_udp(spiffs_response_file_path); 
                         wait_response_from_pc("new file ready");
                     } else {
-                        ESP_LOGE(tag_udp, "file with path %s can't be opened for reading before sending (progably is is not exists)", spiffs_response_file_path);
+                        ESP_LOGW(tag_udp, "file with path %s can't be opened for reading before sending (progably is does not exists)", spiffs_response_file_path);
+                        fclose(response_file_ptr);
+                        // TODO подумать об случае, когда последний файл из настроек запрашивается, но его нет в spiffs - тогда если не отослать тут
+                        // сигнал, то получится, что wait_response_from_board в питоне будет бесконечно ждать + проверить это руками
+                        // sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+                        // ESP_LOGW(tag_udp_test, "CONTINUE sent (but so such file with path %s)", spiffs_response_file_path);
                     } 
                     char spiffs_command_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                     create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_command_file_path);
-                    if(fopen(spiffs_command_file_path, "r") != NULL){
+                    FILE *command_file_ptr = fopen(spiffs_command_file_path, "r");
+                    if(command_file_ptr != NULL){
+                        fclose(command_file_ptr);
                         // send signal CONTINUE to reading files loop
                         sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
                         ESP_LOGI(tag_udp_test, "CONTINUE sent");
                         send_file_over_udp(spiffs_command_file_path);
                         wait_response_from_pc("new file ready");
                     } else {
-                        ESP_LOGE(tag_udp, "file with path %s can't be opened for reading before sending (progably is is not exists)", spiffs_command_file_path);
+                        ESP_LOGW(tag_udp, "file with path %s can't be opened for reading before sending (progably is does not exists)", spiffs_command_file_path);
+                        fclose(command_file_ptr);
+                        // sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+                        // ESP_LOGW(tag_udp_test, "CONTINUE sent (but so such file with path %s)", spiffs_response_file_path);
                     }
 
                     data_line = strtok_r(NULL, new_line_delimiter, &data_line_saveptr);
@@ -479,7 +491,8 @@ void task_udp_wait_command(void *xCommandGroup){
                         add_line_to_spiffs(spiffs_passes_file_path, data_line);
                         data_line = strtok(NULL, "\n");
                     }
-
+                    // TODO Бывает ошибка, когда send_response_to_board почему-то не попадает на файл
+                    vTaskDelay(pdMS_TO_TICKS(1000));
                     send_response_to_pc("board can read another file");
                 }
                 // конец действий
