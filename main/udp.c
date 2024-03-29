@@ -8,13 +8,13 @@ const static char *name_postfix_command = "_command";
 const static char *name_postfix_response = "_response";
 // =======================================================
 
-const static char *tag_udp = "udp";
+const static char *tag_udp      = "udp";
 const static char *tag_udp_test = "udp test"; // Логи с этой меткой можно впоследствии убрать (они чисто вспомогательные)
 
 const static char *event_board_get_command = "get command from pc";
 const static char *event_udp_finish_action = "finish working with action by command";
 
-const static char *response_send_udp = "response0"; 
+const static char *response_send_udp    = "response0"; 
 const static char *response_receive_udp = "response1";
 
 #define BIT_NEXT_COMMAND BIT0
@@ -165,14 +165,14 @@ static void get_sub_str_by_index(int start_index, int end_index, char src_string
     free(substr_ptr);
 }
 
-static esp_err_t send_file_over_udp(const char *spiffs_file_path){
+static void send_file_over_udp(const char *spiffs_file_path){
     char file_data_string[SIZE_RESPONSE_DATA_MAX];
     if(read_data_from_spiffs_file_to_buffer(spiffs_file_path, file_data_string, sizeof(file_data_string)) == ESP_OK){
 
         send_response_to_pc("ready to send file");
 
-        size_t sent_bytes = sendto(sockfd, "START_FILE", strlen("START_FILE"), 0, (struct sockaddr *)&pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-        ESP_LOGW(tag_udp_test, "START_FILE sent, size %i bytes", sent_bytes);
+        size_t sent_bytes_start_file = sendto(sockfd, "START_FILE", strlen("START_FILE"), 0, (struct sockaddr *)&pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+        ESP_LOGW(tag_udp_test, "START_FILE sent, size %i bytes", sent_bytes_start_file);
 
         wait_response_from_pc("pc start getting file chunks");
 
@@ -192,22 +192,24 @@ static esp_err_t send_file_over_udp(const char *spiffs_file_path){
                 file_data_string,
                 data_chunk_string
             ); 
-            size_t sent_bytes_by_chunk = 0;
-            sent_bytes_by_chunk = sendto(sockfd, data_chunk_string, strlen(data_chunk_string), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+            start_chunk_index = end_chunk_index;
+            size_t sent_bytes_by_chunk = sendto(sockfd, data_chunk_string, strlen(data_chunk_string), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
             file_data_length -= sent_bytes_by_chunk;
             sent_package_size += sent_bytes_by_chunk;
 
             wait_response_from_pc("wait info about reading new chunk");
         }
 
-        size_t sent_bytes = sendto(sockfd, "END_FILE", strlen("END_FILE"), 0, (struct sockaddr *)&pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-        ESP_LOGW(tag_udp_test, "END_FILE sent, size %i bytes", sent_bytes);
+        // Delete if comment
+        // vTaskDelay(pdMS_TO_TICKS(5000));
+
+        size_t sent_bytes_end_file = sendto(sockfd, "END_FILE", strlen("END_FILE"), 0, (struct sockaddr *)&pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+        ESP_LOGW(tag_udp_test, "END_FILE sent, size %i bytes", sent_bytes_end_file);
 
         ESP_LOGI(tag_udp, "message sent, size: %i bytes", sent_package_size);
-        return ESP_OK;
+    } else {
+        ESP_LOGW(tag_udp, "file %s was not sent, probably it is empty", spiffs_file_path);
     }
-
-    ESP_LOGW(tag_udp, "file %s was not sent, probably it is empty", spiffs_file_path);
 }
 
 static int receive_file_over_udp(char *empty_data_buffer, size_t buffer_size){
@@ -326,6 +328,10 @@ void task_udp_wait_command(void *xCommandGroup){
 
                 char spiffs_request_options_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                 create_spiffs_txt_file_path_by_params(name_options_file, (char*)name_postfix_command, spiffs_request_options_path);
+
+               // clear spiffs file before writing to it (to override old file)
+               clear_data_from_spiffs_file(spiffs_request_options_path);
+
                 char* data_line_options_file = strtok(request_options, "\n");
                 while(data_line_options_file){
                     add_line_to_spiffs(spiffs_request_options_path, data_line_options_file);
@@ -352,12 +358,26 @@ void task_udp_wait_command(void *xCommandGroup){
                     // create file spiffs path for sat_name
                     char spiffs_response_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                     create_spiffs_txt_file_path_by_params(sat_id, name_postfix_response, spiffs_response_file_path);
-                    if(send_file_over_udp(spiffs_response_file_path) == ESP_OK){
-
-                    }
+                    if(fopen(spiffs_response_file_path, "r") != NULL){
+                        // send singal CONTINUE to reading files loop
+                        sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+                        ESP_LOGI(tag_udp_test, "CONTINUE sent");
+                        send_file_over_udp(spiffs_response_file_path); 
+                        wait_response_from_pc("new file ready");
+                    } else {
+                        ESP_LOGE(tag_udp, "file with path %s can't be opened for reading before sending (progably is is not exists)", spiffs_response_file_path);
+                    } 
                     char spiffs_command_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                     create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_command_file_path);
-                    send_file_over_udp(spiffs_command_file_path);
+                    if(fopen(spiffs_command_file_path, "r") != NULL){
+                        // send signal CONTINUE to reading files loop
+                        sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+                        ESP_LOGI(tag_udp_test, "CONTINUE sent");
+                        send_file_over_udp(spiffs_command_file_path);
+                        wait_response_from_pc("new file ready");
+                    } else {
+                        ESP_LOGE(tag_udp, "file with path %s can't be opened for reading before sending (progably is is not exists)", spiffs_command_file_path);
+                    }
 
                     // char response_buffer[SIZE_RESPONSE_DATA_MAX];
                     // if(read_data_from_spiffs_file_to_buffer(spiffs_file_path, response_buffer, SIZE_RESPONSE_DATA_MAX) == ESP_OK){
@@ -384,6 +404,11 @@ void task_udp_wait_command(void *xCommandGroup){
                 //     }
                     data_line = strtok_r(NULL, new_line_delimiter, &data_line_saveptr);
                 }
+
+                // send singnal BREAK to reading files loop
+                sendto(sockfd, "BREAK", strlen("BREAK"), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+
+                wait_response_from_pc("pc finished working with files");
 
                 // // send all files over udp
                 // size_t sent_bytes = sendto(sockfd, files_buffer, strlen(files_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
