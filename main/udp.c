@@ -379,29 +379,6 @@ void task_udp_wait_command(void *xCommandGroup){
                         ESP_LOGE(tag_udp, "file with path %s can't be opened for reading before sending (progably is is not exists)", spiffs_command_file_path);
                     }
 
-                    // char response_buffer[SIZE_RESPONSE_DATA_MAX];
-                    // if(read_data_from_spiffs_file_to_buffer(spiffs_file_path, response_buffer, SIZE_RESPONSE_DATA_MAX) == ESP_OK){
-                        // char response_buffer_to_send[SIZE_RESPONSE_DATA_MAX];
-                        // memset(response_buffer_to_sendk, '\0', sizeof(response_buffer_to_send));
-                        // strcat(response_buffer_to_send, "START_FILE\n");
-                //         strcat(response_buffer_to_send, response_buffer);
-                //         strcat(response_buffer_to_send, "END_FILE\n");
-                //         // send sat data to uart to python script get it
-                //         // int pass_bytes = uart_write_bytes(UART_NUM_0, (const char*)&response_buffer, strlen(response_buffer));
-                //         strcat(files_buffer, response_buffer_to_send);
-                //         // ESP_LOGW(command_handler_tag, "%i bytes were sended", pass_bytes);
-                //     }
-                //     create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_file_path);
-                //     char command_buffer[SIZE_COMMAND_DATA_MAX];
-                //     if(read_data_from_spiffs_file_to_buffer(spiffs_file_path, command_buffer, SIZE_COMMAND_DATA_MAX) == ESP_OK){
-                //         char command_buffer_to_send[SIZE_RESPONSE_DATA_MAX] = {'\0'};
-                //         strcat(command_buffer_to_send, "START_FILE\n");
-                //         strcat(command_buffer_to_send, command_buffer);
-                //         strcat(command_buffer_to_send, "END_FILE\n");
-                //         // int command_bytes = uart_write_bytes(UART_NUM_0, (const char*)&command_buffer, strlen(command_buffer));
-                //         // ESP_LOGW(command_handler_tag, "%i bytes were sended", command_bytes);
-                //         strcat(files_buffer, command_buffer_to_send);
-                //     }
                     data_line = strtok_r(NULL, new_line_delimiter, &data_line_saveptr);
                 }
 
