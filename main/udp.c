@@ -344,9 +344,6 @@ void task_udp_wait_command(void *xCommandGroup){
 
                 send_response_to_pc("board finished managing options file");
 
-                // // general buffer string for package of all files that would be send
-                // char files_buffer[SPIFFS_MAX_FILES * SIZE_RESPONSE_DATA_MAX] = {'\0'};
-
                 // interate over file
                 char* data_line_saveptr = NULL;
                 char* sat_saveptr = NULL;
