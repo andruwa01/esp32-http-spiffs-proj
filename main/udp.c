@@ -248,7 +248,12 @@ void task_udp_wait_command(){
         char command_buffer[strlen(command_template)];
         size_t command_length = recvfrom(sockfd, &command_buffer, 16, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len); 
         command_buffer[command_length] = '\0';
+<<<<<<< HEAD
 
+=======
+        // Получение новых команд остановилось
+        // Устанавливаем в группе событий событие, соответствующее нужной нам задаче (в зависимости от полученной команды)
+>>>>>>> origin/main
         ESP_LOGW(tag_udp ,"current command: %s\n", command_buffer);
 
         if(strcmp(command_buffer, command_template) == 0)
