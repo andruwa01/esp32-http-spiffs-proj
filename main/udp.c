@@ -366,8 +366,11 @@ void task_udp_wait_command(void *xCommandGroup){
                     } else {
                         ESP_LOGW(tag_udp, "file with path %s can't be opened for reading before sending (progably is does not exists)", spiffs_response_file_path);
                         fclose(response_file_ptr);
+<<<<<<< HEAD
                         // TODO подумать об случае, когда последний файл из настроек запрашивается, но его нет в spiffs - тогда если не отослать тут
                         // сигнал, то получится, что wait_response_from_board в питоне будет бесконечно ждать + проверить это руками
+=======
+>>>>>>> origin/main
                         // sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
                         // ESP_LOGW(tag_udp_test, "CONTINUE sent (but so such file with path %s)", spiffs_response_file_path);
                     } 
