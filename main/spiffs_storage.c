@@ -25,6 +25,17 @@ void add_line_to_spiffs(char* path_to_spiffs_file, char* text_to_write){
     }
 }
 
+void add_file_to_spiffs(char *path_to_spiffs_file, char *buffer_to_write){
+    // first data line, to interate over it
+    char *data_line = strtok(buffer_to_write, "\n");
+    // Parse all lines and add them to spiffs
+    while(data_line){
+        add_line_to_spiffs(path_to_spiffs_file, data_line);
+        data_line = strtok(NULL, "\n");
+    }
+    ESP_LOGI(spiffs_tag, "file %s successfully created in spiffs", path_to_spiffs_file);
+}
+
 void clear_data_from_spiffs_file(char* path_to_spiffs_file){
     FILE* fp = fopen(path_to_spiffs_file, "w");
     if(fp == NULL){
