@@ -248,7 +248,7 @@ void task_udp_wait_command(){
         char command_buffer[strlen(command_template)];
         size_t command_length = recvfrom(sockfd, &command_buffer, 16, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len); 
         command_buffer[command_length] = '\0';
-        ESP_LOGW(tag_udp ,"current command: %s\n", command_buffer);
+        ESP_LOGW(tag_udp ,"current command: %s", command_buffer);
 
         if(strcmp(command_buffer, command_template) == 0)
 
@@ -321,7 +321,7 @@ void task_udp_wait_command(){
                     ESP_LOGI(tag_udp_test, "CONTINUE sent");
                     wait_response_from_pc("pc get continue signal");
                     send_file_over_udp(spiffs_response_file_path); 
-                    wait_response_from_pc("new file ready");
+                    wait_response_from_pc("board can send next file");
                 } else {
                     ESP_LOGW(tag_udp, "file with path %s can't be opened for reading before sending (progably is does not exist)", spiffs_response_file_path);
                     fclose(response_file_ptr);
@@ -340,7 +340,7 @@ void task_udp_wait_command(){
                     ESP_LOGI(tag_udp_test, "CONTINUE sent");
                     wait_response_from_pc("pc get continue signal");
                     send_file_over_udp(spiffs_command_file_path);
-                    wait_response_from_pc("new file ready");
+                    wait_response_from_pc("pc can read next file");
                 } else {
                     ESP_LOGW(tag_udp, "file with path %s can't be opened for reading before sending (progably is does not exists)", spiffs_command_file_path);
                     fclose(command_file_ptr);
@@ -369,7 +369,6 @@ void task_udp_wait_command(){
         {
             send_response_to_pc(event_board_get_command);
             wait_response_from_pc("python starts reading files");
-
             // get stats about spiffs
             size_t total = 0, used = 0;
             esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
@@ -379,7 +378,8 @@ void task_udp_wait_command(){
             // send free space information to python script
             size_t sent_bytes = sendto(sockfd, free_space_buffer, strlen(free_space_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
             ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
-            wait_response_from_pc("finish reading data");
+            // wait_response_from_pc("finish reading data");
+
             // response to python that we ready to get files with data
             send_response_to_pc("ready to get files with data");
 
@@ -461,7 +461,7 @@ void task_udp_wait_command(){
         }
 
         else {
-            ESP_LOGE(tag_udp, "wrong command get");
+            ESP_LOGE(tag_udp, "no such command presents in functionlaity\n");
         }
     }
 }
