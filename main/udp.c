@@ -287,9 +287,8 @@ void task_udp_wait_command(){
                 ESP_LOGE(tag_udp, "mistake during file handling");
                 break;
             }
-            // size_t data_length = recvfrom(sockfd, request_options, size_max_request_options_file, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
-            // request_options[data_length] = '\0';
-            ESP_LOGW(tag_udp, "get data package, content:\n====\n%s\n====", request_options);
+
+            // ESP_LOGW(tag_udp, "get data package, content:\n====\n%s\n====", request_options);
 
             char spiffs_request_options_path[SPIFFS_FILE_NAME_LENGTH_MAX];
             create_spiffs_txt_file_path_by_params(name_options_file, (char*)name_postfix_command, spiffs_request_options_path);
@@ -355,15 +354,16 @@ void task_udp_wait_command(){
                 data_line = strtok_r(NULL, new_line_delimiter, &data_line_saveptr);
             }
 
-            // send singnal BREAK to reading files loop
+            // // send singnal BREAK to reading files loop
             sendto(sockfd, "BREAK", strlen("BREAK"), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+            ESP_LOGI(tag_udp_test, "BREAK sent");
 
             wait_response_from_pc("pc finished working with files");
 
-            // xEventGroupSetBits(
-            //     (EventGroupHandle_t)xCommandGroup,
-            //     BIT_NEXT_COMMAND
-            // );
+            // // xEventGroupSetBits(
+            // //     (EventGroupHandle_t)xCommandGroup,
+            // //     BIT_NEXT_COMMAND
+            // // );
 
             send_response_to_pc(event_udp_finish_action);
         }
@@ -451,8 +451,10 @@ void task_udp_wait_command(){
                 // clear spiffs file before writing to it (to override old file)
                 clear_data_from_spiffs_file(spiffs_passes_file_path);
                 add_file_to_spiffs(spiffs_passes_file_path, file_buffer);
+
                 // Бывает ошибка, когда send_response_to_board почему-то не попадает на файл
                 vTaskDelay(pdMS_TO_TICKS(1000));
+
                 send_response_to_pc("board can read another file");
             }
 
