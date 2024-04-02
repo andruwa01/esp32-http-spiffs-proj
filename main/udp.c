@@ -107,6 +107,7 @@ static void wait_response_from_pc(const char *waiting_event_info){
     // data_buffer[data_length] = '\0';
     // ESP_LOGW(tag_udp, "get data: %s\n", data_buffer);
 
+
     char data_buffer[strlen(response_receive_udp) + 1];
     while(strcmp(data_buffer, response_receive_udp) != 0){
         ESP_LOGW(tag_udp, "udp receive event: %s", waiting_event_info);
@@ -140,13 +141,16 @@ static void send_file_over_udp(const char *spiffs_file_path){
         size_t sent_bytes_start_file = sendto(sockfd, "START_FILE", strlen("START_FILE"), 0, (struct sockaddr *)&pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
         ESP_LOGW(tag_udp_test, "START_FILE sent, size %i bytes", sent_bytes_start_file);
 
-        wait_response_from_pc("pc start getting file chunks");
+        wait_response_from_pc("pc can start getting file chunks");
 
         // remember length of data in file
         size_t file_data_length = strlen(file_data_string);
         size_t sent_package_size = 0;
         size_t start_chunk_index = 0;
         while(file_data_length > 0){
+
+            wait_response_from_pc("wait info about reading new chunk");
+
             u_int end_chunk_index = start_chunk_index + 512;
             if(end_chunk_index > strlen(file_data_string)){
                 end_chunk_index = strlen(file_data_string);
@@ -162,19 +166,16 @@ static void send_file_over_udp(const char *spiffs_file_path){
             size_t sent_bytes_by_chunk = sendto(sockfd, data_chunk_string, strlen(data_chunk_string), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
             file_data_length -= sent_bytes_by_chunk;
             sent_package_size += sent_bytes_by_chunk;
-
-            wait_response_from_pc("wait info about reading new chunk");
         }
 
-        // Delete if comment
-        // vTaskDelay(pdMS_TO_TICKS(5000));
+        wait_response_from_pc("pc ready to get chunk with END_FILE");
 
         size_t sent_bytes_end_file = sendto(sockfd, "END_FILE", strlen("END_FILE"), 0, (struct sockaddr *)&pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
         ESP_LOGW(tag_udp_test, "END_FILE sent, size %i bytes", sent_bytes_end_file);
 
         ESP_LOGI(tag_udp, "message sent, size: %i bytes", sent_package_size);
     } else {
-        ESP_LOGW(tag_udp, "file %s was not sent, probably it is empty", spiffs_file_path);
+        ESP_LOGE(tag_udp, "file %s was not sent, probably it is empty", spiffs_file_path);
     }
 }
 
@@ -310,6 +311,7 @@ void task_udp_wait_command(){
                 // skip sat_name and get to sat_id
                 strtok_r(data_line, param_data_delimiter, &sat_saveptr);
                 char *sat_id = strtok_r(NULL, param_data_delimiter, &sat_saveptr);
+
                 // create file spiffs path for sat_name
                 char spiffs_response_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                 create_spiffs_txt_file_path_by_params(sat_id, name_postfix_response, spiffs_response_file_path);
@@ -319,9 +321,9 @@ void task_udp_wait_command(){
                     // send singal CONTINUE to reading files loop
                     sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
                     ESP_LOGI(tag_udp_test, "CONTINUE sent");
-                    wait_response_from_pc("pc get continue signal");
+                    // wait_response_from_pc("pc get continue signal");
                     send_file_over_udp(spiffs_response_file_path); 
-                    wait_response_from_pc("board can send next file");
+                    wait_response_from_pc("pc can read next file");
                 } else {
                     ESP_LOGW(tag_udp, "file with path %s can't be opened for reading before sending (progably is does not exist)", spiffs_response_file_path);
                     fclose(response_file_ptr);
@@ -330,6 +332,7 @@ void task_udp_wait_command(){
                     // sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
                     // ESP_LOGW(tag_udp_test, "CONTINUE sent (but so such file with path %s)", spiffs_response_file_path);
                 } 
+
                 char spiffs_command_file_path[SPIFFS_FILE_NAME_LENGTH_MAX];
                 create_spiffs_txt_file_path_by_params(sat_id, name_postfix_command, spiffs_command_file_path);
                 FILE *command_file_ptr = fopen(spiffs_command_file_path, "r");
@@ -338,7 +341,7 @@ void task_udp_wait_command(){
                     // send signal CONTINUE to reading files loop
                     sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
                     ESP_LOGI(tag_udp_test, "CONTINUE sent");
-                    wait_response_from_pc("pc get continue signal");
+                    // wait_response_from_pc("pc get continue signal");
                     send_file_over_udp(spiffs_command_file_path);
                     wait_response_from_pc("pc can read next file");
                 } else {
@@ -347,6 +350,7 @@ void task_udp_wait_command(){
                     // sendto(sockfd, "CONTINUE", strlen("CONTINUE"), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
                     // ESP_LOGW(tag_udp_test, "CONTINUE sent (but so such file with path %s)", spiffs_response_file_path);
                 }
+
 
                 data_line = strtok_r(NULL, new_line_delimiter, &data_line_saveptr);
             }
@@ -368,7 +372,9 @@ void task_udp_wait_command(){
         
         {
             send_response_to_pc(event_board_get_command);
+
             wait_response_from_pc("python starts reading files");
+
             // get stats about spiffs
             size_t total = 0, used = 0;
             esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
@@ -378,7 +384,8 @@ void task_udp_wait_command(){
             // send free space information to python script
             size_t sent_bytes = sendto(sockfd, free_space_buffer, strlen(free_space_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
             ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
-            // wait_response_from_pc("finish reading data");
+
+            wait_response_from_pc("finish reading data");
 
             // response to python that we ready to get files with data
             send_response_to_pc("ready to get files with data");
