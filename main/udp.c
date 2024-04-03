@@ -24,6 +24,7 @@ const static char *command_template               = "commandx";
 const static char *command_send_spiffs_data_to_pc = "command0";
 const static char *command_send_pc_data_to_spiffs = "command1";
 const static char *command_send_spiffs_info_to_pc = "command2";
+const static char *command_clear_spiffs_by_opts   = "command3";
 // const static char *command_stop_waiting_files     = "command2";
 
 const static char *new_line_delimiter   = "\n";
@@ -231,6 +232,15 @@ static int receive_msg_over_udp(char *empty_data_buf, size_t buf_size){
 static int receive_file_over_udp(char *empty_data_buffer, size_t buffer_size){
     size_t msg_size = receive_msg_over_udp(empty_data_buffer, buffer_size);
     return msg_size;
+}
+
+static void clear_spiffs_file_by_params(char* file_name, const char* name_postfix){
+        if(!file_name || !name_postfix){
+            ESP_LOGE(tag_udp, "file_name or name_postfix is null. Working impossible");
+        }
+        char file_path_buffer[SPIFFS_FILE_NAME_LENGTH_MAX];
+        create_spiffs_txt_file_path_by_params(file_name, name_postfix, file_path_buffer);
+        clear_data_from_spiffs_file(file_path_buffer);
 }
 
 // void task_udp_wait_command(void *xCommandGroup){
@@ -530,6 +540,29 @@ void task_udp_wait_command(){
             send_response_to_pc(event_udp_finish_action);
         }
 
+        else if(strcmp(command_buffer, command_clear_spiffs_by_opts) == 0)
+        
+        {
+            send_response_to_pc(event_udp_board_get_command);
+            send_response_to_pc("board ready to get list of sat is's");
+
+            char temp_data_buffer[256];
+            memset(temp_data_buffer, '\0', sizeof(temp_data_buffer));
+            receive_file_over_udp(temp_data_buffer, sizeof(temp_data_buffer));
+            char *data_line = strtok(temp_data_buffer, "\n");
+            if(data_line == NULL){
+                ESP_LOGE(tag_udp, "ERROR! First line is empty! File is empty!");
+            }
+
+            while(data_line){
+                clear_spiffs_file_by_params(data_line, name_postfix_response);
+                clear_spiffs_file_by_params(data_line, name_postfix_command);
+                data_line = strtok(NULL, "\n");
+            }
+
+            send_response_to_pc(event_udp_finish_action);
+        }
+
         else {
             ESP_LOGE(tag_udp, "no such command presents in functionlaity\n");
         }
@@ -560,59 +593,4 @@ void initialize_udp_tasks(void){
         ESP_LOGE(tag_udp, "Error! Task not created");
         vTaskDelete(xCommandHandle);
     }
-}
-
-void udp_task(void *pvParameters){
-    // TickType_t xLastWakeTime;
-    int sockfd;
-    struct sockaddr_in pc_wifi_addr, pc_wifi_addr_send, board_wifi_addr_receive;
-
-    ESP_LOGI(tag_udp, "Create socket . . .\n");
-    if((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0){
-        ESP_LOGE(tag_udp, "Socket not created\n");
-        vTaskDelete(NULL);
-    }
-
-    memset(&pc_wifi_addr, 0, sizeof(pc_wifi_addr));
-    memset(&pc_wifi_addr_send, 0, sizeof(pc_wifi_addr_send));
-    memset(&board_wifi_addr_receive, 0, sizeof(board_wifi_addr_receive));
-    socklen_t pc_wifi_addr_len = sizeof(pc_wifi_addr_len);
-
-    // board info
-    board_wifi_addr_receive.sin_family = AF_INET; // ipv4
-    board_wifi_addr_receive.sin_addr.s_addr = INADDR_ANY;
-    board_wifi_addr_receive.sin_port = htons(CONFIG_BOARD_PORT);
-
-    // link socket with board
-    if(bind(sockfd, (const struct sockaddr*) &board_wifi_addr_receive, sizeof(struct sockaddr_in)) < 0){
-        ESP_LOGE(tag_udp, "socket not binded\n");
-        vTaskDelete(NULL);
-    }
-    ESP_LOGI(tag_udp, "socket was binded\n");
-
-    // pc info
-    pc_wifi_addr_send.sin_family = AF_INET;// ipv4
-    pc_wifi_addr_send.sin_addr.s_addr = inet_addr(CONFIG_PC_IP_WIFI);
-    pc_wifi_addr_send.sin_port = htons(CONFIG_PC_PORT);
-
-    char buffer_raw_data[128];
-    char message_to_send[] = "hello from esp32";
-
-    while(true){
-        ESP_LOGW(tag_udp, "Waiting data from port %i", CONFIG_BOARD_PORT);
-        size_t message_length = recvfrom(sockfd, &buffer_raw_data, sizeof(buffer_raw_data) - 1, 0, (struct sockaddr*) &pc_wifi_addr, &pc_wifi_addr_len);
-        buffer_raw_data[message_length] = '\0'; 
-        ESP_LOGI(tag_udp, "data from pc: %s\n", buffer_raw_data);
-
-        vTaskDelay(pdMS_TO_TICKS(5000));
-
-        sendto(sockfd, &message_to_send, strlen(message_to_send), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-        ESP_LOGW(tag_udp, "message \"%s\" sent to port %i, size %i bytes", message_to_send, CONFIG_PC_PORT, strlen(message_to_send));
-
-        vTaskDelay(pdMS_TO_TICKS(5000));
-    }
-
-    shutdown(sockfd, 0);
-    close(sockfd);
-    vTaskDelete(NULL);
 }
