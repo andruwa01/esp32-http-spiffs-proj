@@ -11,8 +11,8 @@ const static char *name_postfix_response = "_response";
 const static char *tag_udp      = "udp";
 const static char *tag_udp_test = "udp test"; // Логи с этой меткой можно впоследствии убрать (они чисто вспомогательные)
 
-const static char *event_board_get_command = "get command from pc";
-const static char *event_udp_finish_action = "finish working with action by command";
+const static char *event_udp_board_get_command = "get command from pc";
+const static char *event_udp_finish_action     = "finish working with action by command";
 
 const static char *response_send_udp    = "response0"; 
 const static char *response_receive_udp = "response1";
@@ -23,6 +23,7 @@ const static char *response_receive_udp = "response1";
 const static char *command_template               = "commandx";
 const static char *command_send_spiffs_data_to_pc = "command0";
 const static char *command_send_pc_data_to_spiffs = "command1";
+const static char *command_send_spiffs_info_to_pc = "command2";
 // const static char *command_stop_waiting_files     = "command2";
 
 const static char *new_line_delimiter   = "\n";
@@ -256,7 +257,7 @@ void task_udp_wait_command(){
 
         {
             // Ответить питону, что получили команду
-            send_response_to_pc(event_board_get_command);
+            send_response_to_pc(event_udp_board_get_command);
             wait_response_from_pc("test wating 1");
             // Действия над командой
             ESP_LOGW(tag_udp, "action to test command!");
@@ -277,7 +278,7 @@ void task_udp_wait_command(){
 
 
         {
-            send_response_to_pc(event_board_get_command);
+            send_response_to_pc(event_udp_board_get_command);
 
             char request_options[SIZE_OPTIONS_FILE_MAX];
             memset(request_options, '\0', sizeof(request_options));
@@ -371,7 +372,7 @@ void task_udp_wait_command(){
         else if(strcmp(command_buffer, command_send_pc_data_to_spiffs) == 0)
         
         {
-            send_response_to_pc(event_board_get_command);
+            send_response_to_pc(event_udp_board_get_command);
 
             wait_response_from_pc("python starts reading files");
 
@@ -465,6 +466,57 @@ void task_udp_wait_command(){
             //     (EventGroupHandle_t)xCommandGroup,
             //     BIT_NEXT_COMMAND
             // );
+
+            send_response_to_pc(event_udp_finish_action);
+        }
+
+        else if(stcmp(command_buffer, command_send_spiffs_info_to_pc))
+        
+        {
+            send_response_to_pc(event_udp_board_get_command);
+            wait_response_from_pc("pc readty to get info about free space in spiffs");
+
+            // Отправить строчку с общей статистикой
+            // get stats about spiffs
+            size_t total = 0, used = 0;
+            esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
+            size_t free_space = total - used;
+            char free_space_buffer[strlen("free=") + 4 * sizeof(char) + sizeof("\n")];
+            sprintf(free_space_buffer, "free=%i\n", free_space);
+            // send free space information to python script
+            size_t sent_bytes = sendto(sockfd, free_space_buffer, strlen(free_space_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+            ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
+
+            send_response_to_pc("board finished sending general spiffs info");
+            wait_response_from_pc("wait singal that pc ready to read information about each file in spiffs");
+
+            char spiffs_files_info[2 * SPIFFS_MAX_FILES * (SPIFFS_FILE_NAME_LENGTH_MAX + strlen(": ") + 4 * sizeof(char))];
+            memset(spiffs_files_info, '\0', sizeof(spiffs_files_info));
+
+            DIR* dptr;
+            struct dirent* dir;
+            dptr = opendir(SPIFFS_BASE_PATH);
+            if(dptr){
+                while((dir = readdir(dptr)) != NULL){
+                    char file_path[SPIFFS_FILE_NAME_LENGTH_MAX + strlen("/") + strlen(dir->d_name)];
+                    sprintf(file_path, "%s/%s", SPIFFS_BASE_PATH, dir->d_name);
+                    // get the size of one file
+                    size_t size_of_file;
+                    FILE* fp = fopen(file_path, "r");
+                    fseek(fp, 0, SEEK_END);
+                    size_of_file = ftell(fp);
+                    fclose(fp);
+                    char file_stats_line[strlen(dir->d_name) + strlen(": ") + 4 * sizeof(char)];
+                    sprintf(file_stats_line, "%s: %i\n", dir->d_name, size_of_file);
+                    strcat(spiffs_files_info, file_stats_line);
+                }
+
+                closedir(dptr);
+            }
+
+            // send info about files in udp message
+            size_t sent_bytes = sendto(sockfd, spiffs_files_info, strlen(spiffs_files_info), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+            ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
 
             send_response_to_pc(event_udp_finish_action);
         }

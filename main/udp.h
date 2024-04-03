@@ -1,6 +1,8 @@
 #ifndef UDP_H_
 #define UDP_H_
 
+#include <dirent.h>
+
 #include "options.h"
 #include "spiffs_storage.h"
 
