@@ -25,6 +25,7 @@ const static char *command_send_spiffs_data_to_pc = "command0";
 const static char *command_send_pc_data_to_spiffs = "command1";
 const static char *command_send_spiffs_info_to_pc = "command2";
 const static char *command_clear_spiffs_by_opts   = "command3";
+const static char *command_clear_all              = "command4";
 // const static char *command_stop_waiting_files     = "command2";
 
 const static char *new_line_delimiter   = "\n";
@@ -548,7 +549,7 @@ void task_udp_wait_command(){
 
             char temp_data_buffer[256];
             memset(temp_data_buffer, '\0', sizeof(temp_data_buffer));
-            receive_file_over_udp(temp_data_buffer, sizeof(temp_data_buffer));
+            receive_msg_over_udp(temp_data_buffer, sizeof(temp_data_buffer));
             char *data_line = strtok(temp_data_buffer, "\n");
             if(data_line == NULL){
                 ESP_LOGE(tag_udp, "ERROR! First line is empty! File is empty!");
@@ -561,6 +562,26 @@ void task_udp_wait_command(){
             }
 
             wait_response_from_pc("get signal that pc finish working with files");
+            send_response_to_pc(event_udp_finish_action);
+        }
+
+        else if(strcmp(command_buffer, command_clear_all) == 0)
+        
+        {
+            send_response_to_pc(event_udp_board_get_command);
+
+            DIR *dptr;
+            struct dirent *dir;
+            dptr = opendir(SPIFFS_BASE_PATH);
+            if(dptr){
+                while((dir = readdir(dptr)) != NULL){
+                    char file_path[SPIFFS_FILE_NAME_LENGTH_MAX + strlen("/") + strlen(dir->d_name)];
+                    sprintf(file_path, "%s/%s", SPIFFS_BASE_PATH, dir->d_name);
+                    clear_data_from_spiffs_file(file_path);
+                }
+                closedir(dptr);
+            }
+
             send_response_to_pc(event_udp_finish_action);
         }
 
