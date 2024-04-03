@@ -1,8 +1,0 @@
-name=RS52SG
-norad=57170
-freq=?
-bw=?
-sf=?
-cr=?
-sw=?
-pl=?

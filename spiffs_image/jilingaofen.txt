@@ -1,8 +1,0 @@
-name=jilin-01_gaofen_2f
-norad=49338
-freq=?
-bw=?
-sf=?
-cr=?
-sw=?
-pl=?

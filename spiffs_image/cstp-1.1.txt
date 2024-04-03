@@ -1,8 +1,0 @@
-name=CSTP-1.1
-norad=57202
-freq=?
-bw=?
-sf=?
-cr=?
-sw=?
-pl=?

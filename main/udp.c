@@ -435,7 +435,7 @@ void task_udp_wait_command(){
                     break;
                 }
 
-                printf("data from pc:\n====\n%s\n====\n", file_buffer);
+                // printf("data from pc:\n====\n%s\n====\n", file_buffer);
 
                 char temp_data_buffer_for_getting_name[SIZE_RESPONSE_DATA_MAX];
                 strcpy(temp_data_buffer_for_getting_name, file_buffer);
@@ -472,6 +472,13 @@ void task_udp_wait_command(){
                 // clear spiffs file before writing to it (to override old file)
                 clear_data_from_spiffs_file(spiffs_passes_file_path);
                 add_file_to_spiffs(spiffs_passes_file_path, file_buffer);
+
+                //==== Test print of data =====
+                char file_buffer_data[SIZE_RESPONSE_DATA_MAX];
+                memset(file_buffer_data, '\0', sizeof(file_buffer));
+                read_data_from_spiffs_file_to_buffer(spiffs_passes_file_path, file_buffer_data, SIZE_RESPONSE_DATA_MAX);
+                ESP_LOGI(tag_udp_test, "data from spiffs file: %s\n=====\n%s\n=====\n", spiffs_passes_file_path, file_buffer_data);
+                //=============================
 
                 // Бывает ошибка, когда send_response_to_board почему-то не попадает на файл
                 vTaskDelay(pdMS_TO_TICKS(1000));
@@ -581,7 +588,6 @@ void task_udp_wait_command(){
                 }
                 closedir(dptr);
             }
-
             send_response_to_pc(event_udp_finish_action);
         }
 

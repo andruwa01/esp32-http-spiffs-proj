@@ -5,3 +5,5 @@ sdkconfig
 sdkconfig.old
 main/api_key.h
 formatData
+faq.txt
+spiffs_image/

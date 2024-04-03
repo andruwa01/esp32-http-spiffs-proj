@@ -1,8 +1,0 @@
-name=RS52SD
-norad=57208
-freq=?
-bw=?
-sf=?
-cr=?
-sw=?
-pl=?

@@ -1,8 +1,0 @@
-name=RS52SE
-norad=57205
-freq=?
-bw=?
-sf=?
-cr=?
-sw=?
-pl=?
