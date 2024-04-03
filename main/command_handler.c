@@ -320,6 +320,7 @@ void initialize_command_handler(){
                 closedir(dptr);
             }
             uart_write_bytes(UART_NUM_0, spiffs_files_info, strlen(spiffs_files_info));
+
             wait_response_from_python("python finishes working with data");
             send_response_to_pc(message_finish_command);
         }

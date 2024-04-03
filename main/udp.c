@@ -180,48 +180,49 @@ static void send_file_over_udp(const char *spiffs_file_path){
     }
 }
 
-static int receive_file_over_udp(char *empty_data_buffer, size_t buffer_size){
-    if(empty_data_buffer[0] != '\0'){
+// static int receive_file_over_udp(char *empty_data_buffer, size_t buffer_size){
+static int receive_msg_over_udp(char *empty_data_buf, size_t buf_size){
+    if(empty_data_buf[0] != '\0'){
         ESP_LOGE(tag_udp, "ERROR! This data buffer will be updated, so you need to make it full empty with first char null-terminated");
         return -1;
     }
 
-    wait_response_from_pc("wait signal from pc that it ready to send file");
+    wait_response_from_pc("wait signal from pc that it ready to send message");
 
-    char start_file_buffer[strlen("START_FILE") + 1]; 
-    while(strcmp(start_file_buffer, "START_FILE") != 0){
-        int start_file_bytes = recvfrom(sockfd, start_file_buffer, sizeof(start_file_buffer) - 1, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
-        start_file_buffer[start_file_bytes] = '\0';
-        if(start_file_bytes == -1){
-            ESP_LOGE(tag_udp, "this is not first line of udp file");
+    char start_msg_buf[strlen("START_MSG") + 1]; 
+    while(strcmp(start_msg_buf, "START_MSG") != 0){
+        int start_msg_bytes = recvfrom(sockfd, start_msg_buf, sizeof(start_msg_buf) - 1, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);
+        start_msg_buf[start_msg_bytes] = '\0';
+        if(start_msg_bytes == -1){
+            ESP_LOGE(tag_udp, "this is not first line of udp message");
         }
     }
 
-    ESP_LOGW(tag_udp_test, "get START_FILE");
-    send_response_to_pc("board get file");
+    ESP_LOGW(tag_udp_test, "get START_MSG");
+    send_response_to_pc("board get message");
     
     char data_chunk[1024];
     size_t used_bytes = 0;
     while(true){
-        ESP_LOGW(tag_udp, "ready to get new file chunk");
+        ESP_LOGW(tag_udp, "ready to get new message chunk");
         size_t received_bytes = recvfrom(sockfd, data_chunk, sizeof(data_chunk) - 1, 0, (struct sockaddr*) &pc_wifi_addr_receive, &pc_wifi_addr_len);   
         data_chunk[received_bytes] = '\0';
-        if(strcmp(data_chunk, "END_FILE") == 0){
+        if(strcmp(data_chunk, "END_MSG") == 0){
             ESP_LOGW(tag_udp, "data chunk finished");
             break;
         }
         // printf("received chunk:\n====\n%s\n====\n", data_chunk);
-        strcat(empty_data_buffer, data_chunk);
+        strcat(empty_data_buf, data_chunk);
 
         used_bytes += received_bytes;
-        if(buffer_size < used_bytes){
-            ESP_LOGE(tag_udp, "ERROR! %i bytes package does not fit into buffer of %i bytes", used_bytes, buffer_size);
+        if(buf_size < used_bytes){
+            ESP_LOGE(tag_udp, "ERROR! %i bytes package does not fit into buffer of %i bytes", used_bytes, buf_size);
             return -1;
         }
         send_response_to_pc("ready to get new chunk");
     }
 
-    ESP_LOGI(tag_udp_test, "finish file handle");
+    ESP_LOGI(tag_udp_test, "finish message handle");
     return used_bytes;
 }
 
@@ -283,7 +284,7 @@ void task_udp_wait_command(){
             char request_options[SIZE_OPTIONS_FILE_MAX];
             memset(request_options, '\0', sizeof(request_options));
             ESP_LOGW(tag_udp, "udp receive event: %s", "waiting request options file");
-            int data_length = receive_file_over_udp(request_options, SIZE_OPTIONS_FILE_MAX);
+            int data_length = receive_msg_over_udp(request_options, SIZE_OPTIONS_FILE_MAX);
             if(data_length == -1){
                 ESP_LOGE(tag_udp, "mistake during file handling");
                 break;
@@ -409,7 +410,7 @@ void task_udp_wait_command(){
                 char file_buffer[SIZE_RESPONSE_DATA_MAX];
                 memset(file_buffer, '\0', sizeof(file_buffer));
                 
-                int file_size = receive_file_over_udp(file_buffer, SIZE_RESPONSE_DATA_MAX);
+                int file_size = receive_msg_over_udp(file_buffer, SIZE_RESPONSE_DATA_MAX);
                 if(file_size == 0){
                     ESP_LOGE(tag_udp, "some error raised");
                     break;
@@ -470,7 +471,7 @@ void task_udp_wait_command(){
             send_response_to_pc(event_udp_finish_action);
         }
 
-        else if(stcmp(command_buffer, command_send_spiffs_info_to_pc))
+        else if(strcmp(command_buffer, command_send_spiffs_info_to_pc) == 0)
         
         {
             send_response_to_pc(event_udp_board_get_command);
@@ -515,8 +516,8 @@ void task_udp_wait_command(){
             }
 
             // send info about files in udp message
-            size_t sent_bytes = sendto(sockfd, spiffs_files_info, strlen(spiffs_files_info), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-            ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
+            size_t sent_bytes_files_info = sendto(sockfd, spiffs_files_info, strlen(spiffs_files_info), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+            ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes_files_info);
 
             send_response_to_pc(event_udp_finish_action);
         }
