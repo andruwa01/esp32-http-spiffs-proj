@@ -535,7 +535,6 @@ void task_udp_wait_command(){
             // size_t sent_bytes_files_info = sendto(sockfd, spiffs_files_info, strlen(spiffs_files_info), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
             // ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes_files_info);
             send_msg_over_udp(spiffs_files_info);
-<<<<<<< HEAD
 
             wait_response_from_pc("get signal that pc finish working with files");
             send_response_to_pc(event_udp_finish_action);
@@ -545,7 +544,7 @@ void task_udp_wait_command(){
         
         {
             send_response_to_pc(event_udp_board_get_command);
-            send_response_to_pc("board ready to get list of sat is's");
+            send_response_to_pc("board ready to get list of sat id's");
 
             char temp_data_buffer[256];
             memset(temp_data_buffer, '\0', sizeof(temp_data_buffer));
@@ -560,8 +559,6 @@ void task_udp_wait_command(){
                 clear_spiffs_file_by_params(data_line, name_postfix_command);
                 data_line = strtok(NULL, "\n");
             }
-=======
->>>>>>> refs/remotes/origin/main
 
             wait_response_from_pc("get signal that pc finish working with files");
             send_response_to_pc(event_udp_finish_action);
