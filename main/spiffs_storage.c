@@ -76,7 +76,6 @@ esp_err_t read_data_from_spiffs_file_to_buffer(const char *path_to_spiffs_file, 
     }
 
     fread(buffer_to_save_data, sizeof(char), size_of_spiffs_data, fpr);
-
     buffer_to_save_data[size_of_spiffs_data] = '\0'; // add null-terminated symbol for correct print, if needs
 
     fclose(fpr);
