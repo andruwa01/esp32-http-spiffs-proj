@@ -223,7 +223,6 @@ static void send_file_over_udp(const char *spiffs_file_path){
     }
 }
 
-// static int receive_file_over_udp(char *empty_data_buffer, size_t buffer_size){
 static int receive_msg_over_udp(char *empty_data_buf, size_t buf_size){
     if(empty_data_buf[0] != '\0'){
         ESP_LOGE(tag_udp, "ERROR! This data buffer will be updated, so you need to make it full empty with first char null-terminated");
@@ -267,6 +266,11 @@ static int receive_msg_over_udp(char *empty_data_buf, size_t buf_size){
 
     ESP_LOGI(tag_udp_test, "finish message handle");
     return used_bytes;
+}
+
+static int receive_file_over_udp(char *empty_data_buffer, size_t buffer_size){
+    size_t msg_size = receive_msg_over_udp(empty_data_buffer, buffer_size);
+    return msg_size;
 }
 
 // void task_udp_wait_command(void *xCommandGroup){
@@ -327,7 +331,7 @@ void task_udp_wait_command(){
             char request_options[SIZE_OPTIONS_FILE_MAX];
             memset(request_options, '\0', sizeof(request_options));
             ESP_LOGW(tag_udp, "udp receive event: %s", "waiting request options file");
-            int data_length = receive_msg_over_udp(request_options, SIZE_OPTIONS_FILE_MAX);
+            int data_length = receive_file_over_udp(request_options, SIZE_OPTIONS_FILE_MAX);
             if(data_length == -1){
                 ESP_LOGE(tag_udp, "mistake during file handling");
                 break;
@@ -453,7 +457,7 @@ void task_udp_wait_command(){
                 char file_buffer[SIZE_RESPONSE_DATA_MAX];
                 memset(file_buffer, '\0', sizeof(file_buffer));
                 
-                int file_size = receive_msg_over_udp(file_buffer, SIZE_RESPONSE_DATA_MAX);
+                int file_size = receive_file_over_udp(file_buffer, SIZE_RESPONSE_DATA_MAX);
                 if(file_size == 0){
                     ESP_LOGE(tag_udp, "some error raised");
                     break;
