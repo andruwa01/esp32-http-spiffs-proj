@@ -177,47 +177,7 @@ static void send_msg_over_udp(const char *msg_buf){
 static void send_file_over_udp(const char *spiffs_file_path){
     char file_data_string[SIZE_RESPONSE_DATA_MAX];
     if(read_data_from_spiffs_file_to_buffer(spiffs_file_path, file_data_string, sizeof(file_data_string)) == ESP_OK){
-
         send_msg_over_udp(file_data_string);
-
-        // send_response_to_pc("ready to send file");
-
-        // size_t sent_bytes_start_file = sendto(sockfd, "START_FILE", strlen("START_FILE"), 0, (struct sockaddr *)&pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-        // ESP_LOGW(tag_udp_test, "START_FILE sent, size %i bytes", sent_bytes_start_file);
-
-        // wait_response_from_pc("pc can start getting file chunks");
-
-        // // remember length of data in file
-        // size_t file_data_length = strlen(file_data_string);
-        // size_t sent_package_size = 0;
-        // size_t start_chunk_index = 0;
-        // while(file_data_length > 0){
-
-        //     wait_response_from_pc("wait info about reading new chunk");
-
-        //     u_int end_chunk_index = start_chunk_index + 512;
-        //     if(end_chunk_index > strlen(file_data_string)){
-        //         end_chunk_index = strlen(file_data_string);
-        //     }
-        //     char data_chunk_string[SIZE_DATA_CHUNK_UDP_MAX]; 
-        //     get_sub_str_by_index(
-        //         start_chunk_index,
-        //         end_chunk_index, 
-        //         file_data_string,
-        //         data_chunk_string
-        //     ); 
-        //     start_chunk_index = end_chunk_index;
-        //     size_t sent_bytes_by_chunk = sendto(sockfd, data_chunk_string, strlen(data_chunk_string), 0, (struct sockaddr *) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-        //     file_data_length -= sent_bytes_by_chunk;
-        //     sent_package_size += sent_bytes_by_chunk;
-        // }
-
-        // wait_response_from_pc("pc ready to get chunk with END_FILE");
-
-        // size_t sent_bytes_end_file = sendto(sockfd, "END_FILE", strlen("END_FILE"), 0, (struct sockaddr *)&pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-        // ESP_LOGW(tag_udp_test, "END_FILE sent, size %i bytes", sent_bytes_end_file);
-
-        // ESP_LOGI(tag_udp, "message sent, size: %i bytes", sent_package_size);
     } else {
         ESP_LOGE(tag_udp, "file %s was not sent, probably it is empty", spiffs_file_path);
     }
