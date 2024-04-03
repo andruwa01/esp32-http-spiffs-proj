@@ -1,8 +1,0 @@
-name=2023-091T
-norad=57183
-freq=?
-bw=?
-sf=?
-cr=?
-sw=?
-pl=?

@@ -1,8 +1,0 @@
-name=RS52SB
-norad=57200
-freq=?
-bw=?
-sf=?
-cr=?
-sw=?
-pl=?

@@ -1,8 +1,0 @@
-name=Tianqi-7
-norad=54687
-freq=?
-bw=?
-sf=?
-cr=?
-sw=?
-pl=?
