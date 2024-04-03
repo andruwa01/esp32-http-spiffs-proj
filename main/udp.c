@@ -391,8 +391,9 @@ void task_udp_wait_command(){
             char free_space_buffer[strlen("free=") + 4 * sizeof(char) + sizeof("\n")];
             sprintf(free_space_buffer, "free=%i\n", free_space);
             // send free space information to python script
-            size_t sent_bytes = sendto(sockfd, free_space_buffer, strlen(free_space_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-            ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
+            // size_t sent_bytes = sendto(sockfd, free_space_buffer, strlen(free_space_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+            // ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
+            send_msg_over_udp(free_space_buffer);
 
             wait_response_from_pc("finish reading data");
 
@@ -488,12 +489,10 @@ void task_udp_wait_command(){
             // get stats about spiffs
             size_t total = 0, used = 0;
             esp_spiffs_info(SPIFFS_PARTITION_LABEL, &total, &used);
-            size_t free_space = total - used;
-            char free_space_buffer[strlen("free=") + 4 * sizeof(char) + sizeof("\n")];
-            sprintf(free_space_buffer, "free=%i\n", free_space);
+            char free_space_buffer[64];
+            sprintf(free_space_buffer, "total=%i\nused=%i\n", total, used);
             // send free space information to python script
-            size_t sent_bytes = sendto(sockfd, free_space_buffer, strlen(free_space_buffer), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-            ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes);
+            send_msg_over_udp(free_space_buffer);
 
             send_response_to_pc("board finished sending general spiffs info");
             wait_response_from_pc("wait singal that pc ready to read information about each file in spiffs");
@@ -523,9 +522,11 @@ void task_udp_wait_command(){
             }
 
             // send info about files in udp message
-            size_t sent_bytes_files_info = sendto(sockfd, spiffs_files_info, strlen(spiffs_files_info), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
-            ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes_files_info);
+            // size_t sent_bytes_files_info = sendto(sockfd, spiffs_files_info, strlen(spiffs_files_info), 0, (struct sockaddr*) &pc_wifi_addr_send, sizeof(pc_wifi_addr_send));
+            // ESP_LOGW(tag_udp_test, "sent info about free space, sent %i bytes", sent_bytes_files_info);
+            send_msg_over_udp(spiffs_files_info);
 
+            wait_response_from_pc("get signal that pc finish working with files");
             send_response_to_pc(event_udp_finish_action);
         }
 
